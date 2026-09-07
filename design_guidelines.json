@@ -1,0 +1,154 @@
+{
+  "project_name": "Bata SIS Sales Intelligence Platform",
+  "app_type": "dashboard / saas_app (enterprise data platform)",
+  "design_philosophy": {
+    "persona": "E1 Anti-AI Creative Designer - Enterprise Precision Meets Bata Brand Identity",
+    "core_principles": [
+      "Bata Heritage Red & Crisp Swiss Neutralism: Pure white and high-contrast slate surfaces punctuated by Bata Signature Red (#E60000) for primary CTA triggers and status highlights.",
+      "Data Density & High Readability: Uncrowded, high-efficiency data density with sharp 1px borders, subtle 4px/6px radii, and clear tabular typography.",
+      "Ingestion Batches as Hero Interface: Immediate visual clarity on batch telemetry (Arrived, Accepted, Failed, Action Required) with real-time confidence scores and exception indicators.",
+      "Asymmetric Dashboard Bento Layout: High-density widget grids mixing single metrics, trend lines, partner performance breakdown, and anomaly detection feeds."
+    ]
+  },
+  "theme": {
+    "mode": "light (enterprise default with high contrast, crisp dark slate sidebar navigation)",
+    "color_palette": {
+      "bata_primary_red": "#E60000",
+      "bata_red_hover": "#C80000",
+      "bata_red_light": "#FEF2F2",
+      "bata_red_border": "#FCA5A5",
+      "sidebar_bg": "#111827",
+      "sidebar_hover": "#1F2937",
+      "sidebar_active": "#E60000",
+      "sidebar_text": "#9CA3AF",
+      "sidebar_text_active": "#FFFFFF",
+      "surface_bg": "#F8F9FA",
+      "surface_card": "#FFFFFF",
+      "border_subtle": "#E5E7EB",
+      "border_strong": "#D1D5DB",
+      "text_main": "#0F172A",
+      "text_muted": "#64748B",
+      "text_inverse": "#FFFFFF",
+      "status_success": "#16A34A",
+      "status_success_bg": "#F0FDF4",
+      "status_warning": "#D97706",
+      "status_warning_bg": "#FFFBEB",
+      "status_danger": "#DC2626",
+      "status_danger_bg": "#FEF2F2",
+      "status_info": "#2563EB",
+      "status_info_bg": "#EFF6FF"
+    },
+    "forbidden_colors": [
+      "#7351B7 (AI Purple)",
+      "#1B93A4 (Teal Blue/Green for Dashboards)",
+      "#000000 (Pure Black)"
+    ]
+  },
+  "typography": {
+    "heading_font": "Outfit, Cabinet Grotesk, sans-serif",
+    "body_font": "Inter, IBM Plex Sans, sans-serif",
+    "mono_font": "JetBrains Mono, monospace",
+    "font_weights": {
+      "regular": "400",
+      "medium": "500",
+      "semibold": "600",
+      "bold": "700"
+    },
+    "scale": {
+      "h1_page": "text-2xl sm:text-3xl font-bold tracking-tight text-slate-900",
+      "h2_section": "text-xl sm:text-2xl font-semibold tracking-tight text-slate-800",
+      "h3_card": "text-base sm:text-lg font-medium text-slate-800",
+      "body": "text-sm text-slate-700 leading-normal",
+      "table_data": "text-xs font-mono text-slate-800",
+      "label": "text-xs font-semibold text-slate-500 uppercase tracking-wider"
+    }
+  },
+  "layout_and_navigation": {
+    "sidebar": {
+      "style": "Dark slate navy fixed sidebar (#111827) with Bata logo badge and top red accent strip.",
+      "items_count": 13,
+      "items": [
+        {"id": "dashboard", "label": "Dashboard", "icon": "LayoutDashboard"},
+        {"id": "upload_data", "label": "Upload Data", "icon": "UploadCloud"},
+        {"id": "ingestion_batches", "label": "Ingestion Batches", "icon": "Layers", "badge": "Hero Page"},
+        {"id": "review_queue", "label": "Review Queue", "icon": "CheckSquare", "chip_count": 14},
+        {"id": "sales_reports", "label": "Sales Reports", "icon": "BarChart3"},
+        {"id": "insights", "label": "Insights", "icon": "Sparkles"},
+        {"id": "data_quality", "label": "Data Quality", "icon": "ShieldCheck"},
+        {"id": "masters", "label": "Masters", "icon": "Database"},
+        {"id": "partner_config", "label": "Partner Configuration", "icon": "Store"},
+        {"id": "email_config", "label": "Email Configuration", "icon": "Mail"},
+        {"id": "users_roles", "label": "Users & Roles", "icon": "Users"},
+        {"id": "audit_logs", "label": "Audit Logs", "icon": "FileText"},
+        {"id": "settings", "label": "Settings", "icon": "Sliders"}
+      ]
+    },
+    "header": {
+      "style": "Sticky white top bar with crisp bottom border, partner filter dropdown, active batch ticker, notification bell with unread badge, role switcher (Administrator, Data Operations User, Management User), and user avatar."
+    },
+    "content_container": "p-6 sm:p-8 bg-[#F8F9FA] min-h-[calc(100vh-4rem)]"
+  },
+  "key_views_and_components": {
+    "login_page": {
+      "layout": "Split-screen layout: Left side enterprise branding showcase with Bata footwear retail imagery and batch telemetry overview, right side clean credential login with role selector pill buttons.",
+      "data_testids": ["login-email-input", "login-password-input", "login-role-select", "login-submit-button"]
+    },
+    "dashboard_view": {
+      "kpi_cards": [
+        {"label": "Total SIS Sales (MTD)", "value": "₹ 48.24 Cr", "trend": "+12.4% vs last month"},
+        {"label": "Active Partners Ingested", "value": "9 / 9 SIS Partners", "status": "100% On-time"},
+        {"label": "Accepted Record Ratio", "value": "98.6%", "detail": "142,850 / 144,880 rows"},
+        {"label": "Pending Exception Rows", "value": "1,420 rows", "action": "Requires Review"}
+      ],
+      "charts": "Recharts Area chart for daily SIS partner sales breakdown and Bar chart for sales target vs actuals per partner (Shoppers Stop, Lifestyle, Reliance Footwear, Trent/Westside, Metro Shoes, Central, Nykaa Fashion, Flipkart SIS, Amazon SIS).",
+      "data_testids": ["dashboard-kpi-total-sales", "dashboard-kpi-accepted-ratio", "dashboard-sales-trend-chart"]
+    },
+    "upload_data_view": {
+      "features": "Drag-and-drop file zone (.xlsx, .xls, .csv), partner dropdown, sales date range picker, immediate sheet parsing preview with sheet selector tab, auto-detected column headers, confidence score indicators, and instant validation trigger.",
+      "data_testids": ["upload-file-dropzone", "upload-partner-select", "upload-preview-table", "upload-submit-btn"]
+    },
+    "ingestion_batches_hero_view": {
+      "hero_status_banner": "Hero metrics bar showing Total Files Received, Accepted Batches, Failed Rows, and Actionable Mappings.",
+      "batch_table": "Dense data table with Batch ID, Partner Name, File Name, Upload Timestamp, Row Counts (Total, Valid, Flagged, Failed), Confidence Score badge (e.g. 96.4% - Green), Auto-Mapping Status, and Direct Action triggers (Review, Process, Download Original, Audit).",
+      "data_testids": ["ingestion-hero-banner", "ingestion-batch-row", "batch-action-review-btn"]
+    },
+    "review_queue_mapping_view": {
+      "features": "Side-by-side mapping review matrix: Incoming Partner Header, Sample Values array, Proposed Bata Standard Field, Recognition Confidence Score bar (High >90%, Medium 75-90%, Low <75%), AI/Rule Reason tooltip, Manual Override dropdown, and Batch Approve button.",
+      "data_testids": ["mapping-review-table", "mapping-override-dropdown", "mapping-approve-all-btn"]
+    },
+    "exception_workbench": {
+      "features": "Filterable exception queue by Error Type (Unmapped Article Code, Price Mismatch, Store Code Invalid, Date Out of Range, Duplicate Entry), batch selection filter, inline row edit drawer, bulk action toolbar (Reprocess, Ignore, Assign to Partner Manager).",
+      "data_testids": ["exception-filter-type", "exception-row-edit-btn", "exception-bulk-reprocess-btn"]
+    },
+    "sales_reports_view": {
+      "features": "Multi-dimensional filter bar (Date Range, Partner, Zone, Product Category, Article Code), customizable column visibility, data table with pagination, sub-totals, and export triggers (Excel, CSV, PDF).",
+      "data_testids": ["reports-filter-partner", "reports-date-picker", "reports-export-excel-btn"]
+    },
+    "masters_crud": {
+      "features": "Tabbed master data management for Partner Store Master, Bata Article Master, Category Taxonomy, Price Lists, and Currency/Tax Rates. Searchable, paginated tables with inline status toggles and modal forms.",
+      "data_testids": ["masters-tab-stores", "masters-tab-articles", "masters-add-item-btn"]
+    }
+  },
+  "image_urls": [
+    {
+      "category": "Retail Footwear Showcase",
+      "url": "https://images.unsplash.com/photo-1633464129147-777bdcc97c1d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwyfHxyZXRhaWwlMjBzdG9yZSUyMHNob2VzJTIwZGlzcGxheSUyMGFuYWx5dGljcyUyMHBhcnRuZXJ8ZW58MHx8fHwxNzg4NzY2ODU2fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Bata retail shoe wall display used in login hero side panel and dashboard background accents."
+    },
+    {
+      "category": "Retail Analytics & Store Display",
+      "url": "https://images.unsplash.com/photo-1526745925052-dd824d27b9ab?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwxfHxyZXRhaWwlMjBzdG9yZSUyMHNob2VzJTIwZGlzcGxheSUyMGFuYWx5dGljcyUyMHBhcnRuZXJ8ZW58MHx8fHwxNzg4NzY2ODU2fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Premium footwear store display for enterprise partner presentation."
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Use standard React functional components (.js / .jsx files) inside /app/frontend/src/.",
+    "Import Lucide icons from 'lucide-react' for crisp enterprise iconography.",
+    "Use Recharts components (ResponsiveContainer, AreaChart, BarChart, XAxis, YAxis, Tooltip, Legend) for dashboard visual analytics.",
+    "Incorporate Sonner toast notifications via 'sonner' for instant file upload feedback, validation results, and mapping approvals.",
+    "Ensure ALL interactive inputs, buttons, filter selects, and data row items have explicit kebab-case `data-testid` attributes.",
+    "Implement state management allowing realistic switching between Administrator, Data Operations User, and Management User roles.",
+    "Ensure all 13 sidebar navigation items render distinct, fully functional view states or high-fidelity enterprise screens.",
+    "Keep styling clean with high text contrast: crisp white cards, light slate backgrounds (#F8F9FA), 1px solid gray borders (#E5E7EB), and bold red action buttons (#E60000)."
+  ]
+}
