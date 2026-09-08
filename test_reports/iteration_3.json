@@ -1,0 +1,37 @@
+{
+  "summary": "Verified WhatsApp/link-preview branding fix for Bata SIS. 16/17 backend/asset checks pass; frontend login+dashboard show Bata logos, correct title, no 'emergent' text/console. Two meta-tag misses remain: og:url absent, og:image is relative (not absolute) — WhatsApp preview scrapers commonly require an absolute og:image URL.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /", "issue": "og:url meta tag is missing from index.html (was called out in the review requirements)"},
+      {"endpoint": "GET /", "issue": "og:image content is relative '/og-image.png' rather than the absolute URL specified (https://batasis.fundlebrain.ai/og-image.png). WhatsApp/Facebook OG scrapers generally require an absolute https URL for a reliable preview image."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_branding.py",
+    "/app/test_reports/pytest/branding_results.xml"
+  ],
+  "action_items": [
+    "Add <meta property=\"og:url\" content=\"https://batasis.fundlebrain.ai/\" /> to /app/frontend/public/index.html",
+    "Change og:image (and twitter:image) content to the absolute URL https://batasis.fundlebrain.ai/og-image.png so WhatsApp/Facebook preview reliably fetches it"
+  ],
+  "critical_code_review_comments": [
+    "index.html previously required an explicit frontend supervisor restart before OG meta tags started showing in the served HTML — CRA dev server sometimes needs restart on public/index.html changes; keep in mind for future deploys.",
+    "og:image absolute URL requirement per problem statement was not implemented — relative paths are known to be flaky for external OG scrapers."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_branding.py"
+  ],
+  "success_rate": {"backend": "94% (16/17)", "frontend": "100%"},
+  "test_credentials": "admin / Admin@123 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None — read-only checks only, DB untouched",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Branding fix largely complete. Only remaining items: add og:url tag and make og:image/twitter:image absolute URLs in /app/frontend/public/index.html, then restart frontend and re-run /app/backend/tests/test_branding.py (test_og_url_present currently failing). All other checks (title, description, no-emergent, favicon/manifest/logos, /api/batches, /api/reports=15, dashboard KPIs, sidebar logo naturalWidth>0) are passing.",
+  "rca of the issue": "Main agent added og:title/og:description/og:image/twitter:* tags to public/index.html but (a) omitted the og:url tag and (b) used a relative path for og:image instead of the absolute https URL required for external OG consumers like WhatsApp. Additionally the dev server had to be restarted (sudo supervisorctl restart frontend) for the updated index.html to be served — before restart, the served HTML lacked all OG tags."
+}

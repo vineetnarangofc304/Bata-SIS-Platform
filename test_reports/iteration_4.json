@@ -1,0 +1,27 @@
+{
+  "summary": "Verified WhatsApp/OG preview fixes for Bata SIS. GET / returns HTML with correct <title>, absolute og:url and og:image, all required og/twitter meta present; no 'emergent' or 'posthog' strings anywhere. All required static assets return 200. Browser smoke test: login page shows Bata login-logo, admin/Admin@123 signs in successfully, sidebar-logo visible, document.title correct.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A", "frontend": "100%"},
+  "test_credentials": "admin/Admin@123",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "OG/WhatsApp meta fix verified on preview URL. index.html served has <title>Bata SIS Sales Intelligence</title>, og:url=https://batasis.fundlebrain.ai/, og:image=https://batasis.fundlebrain.ai/og-image.png. Assets /og-image.png, /favicon.svg, /bata-logo.svg, /bata-logo-white.svg, /manifest.json all 200. No 'emergent' or 'posthog' strings in HTML. Login+sidebar logo test-ids working.",
+  "verification_details": {
+    "title": "Bata SIS Sales Intelligence",
+    "og:url": "https://batasis.fundlebrain.ai/",
+    "og:image": "https://batasis.fundlebrain.ai/og-image.png",
+    "og:title": "present",
+    "og:description": "present",
+    "emergent_count": 0,
+    "posthog_count": 0,
+    "assets_200": ["/og-image.png", "/favicon.svg", "/bata-logo.svg", "/bata-logo-white.svg", "/manifest.json"],
+    "login-logo": "visible",
+    "sidebar-logo": "visible after login"
+  }
+}
