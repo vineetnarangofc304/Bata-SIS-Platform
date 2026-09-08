@@ -47,7 +47,7 @@ export default function Reports() {
   const footer = res?.totals && <tr className="bg-slate-50 font-semibold"><td colSpan={visible.filter((c) => !res.totals[c.key]).length || 1} className="text-xs uppercase text-slate-500">Total</td>{visible.filter((c) => res.totals[c.key] !== undefined).map((c) => <td key={c.key} className="text-right tabular">{fmt(res.totals[c.key], c.type)}</td>)}{visible.filter((c) => res.totals[c.key] === undefined).slice(1).map((c) => <td key={c.key} />)}</tr>;
   return (
     <div data-testid="reports-page">
-      <PageHeader title="Sales Reports" sub="12 standard reports plus source-record drill-down. Every aggregate traces back to the batch and row it came from." actions={<>
+      <PageHeader title="Sales Reports" sub="15 standard reports plus source-record drill-down. Every aggregate traces back to the batch and row it came from." actions={<>
         <button data-testid="reports-save-view-btn" onClick={saveView} className="h-9 px-3 rounded-md border text-xs font-medium hover:bg-slate-50 flex items-center gap-1"><Save className="h-3.5 w-3.5" />Save view</button>
         <button data-testid="reports-export-csv-btn" onClick={() => exportIt("csv")} className="h-9 px-3 rounded-md border text-xs font-medium hover:bg-slate-50 flex items-center gap-1"><Download className="h-3.5 w-3.5" />CSV</button>
         <button data-testid="reports-export-excel-btn" onClick={() => exportIt("xlsx")} className="h-9 px-3 rounded-md btn-red text-xs font-semibold flex items-center gap-1"><Download className="h-3.5 w-3.5" />Excel</button></>} />
@@ -71,7 +71,7 @@ export default function Reports() {
           </div>
           {report === "records" ? <DataTable testId="records-table" dense columns={cols} rows={recs?.items} loading={loading && !recs} page={page} pages={recs?.pages} total={recs?.total} onPage={setPage} />
             : <><div className="text-xs text-slate-500 mb-2">{res?.name} · {res?.rows?.length ?? 0} rows · click a row to drill down to source records · click headers to sort</div>
-              <DataTable testId="report-table" dense columns={cols} rows={res?.rows} loading={loading && !res} onRowClick={["data_quality_trend", "missing_submissions", "exception_summary"].includes(report) ? undefined : drill} footer={footer} /></>}
+              <DataTable testId="report-table" dense columns={cols} rows={res?.rows} loading={loading && !res} onRowClick={["data_quality_trend", "missing_submissions", "exception_summary", "stock_position"].includes(report) ? undefined : drill} footer={footer} /></>}
         </div>
       </div>
     </div>

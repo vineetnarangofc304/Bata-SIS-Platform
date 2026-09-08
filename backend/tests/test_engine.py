@@ -56,7 +56,7 @@ def test_column_mapping_exact_alias_fuzzy_learned():
     assert by["Zzz"]["proposed_field"] == "store_code" and "Previously approved" in by["Zzz"]["reason"]
     assert by["Article Code"]["proposed_field"] == "sku"
     conf = compute_overall(100, 90, cols, {"high": 90, "medium": 70})
-    assert "unit_price" in conf["missing_required"] and conf["level"] == "low"
+    assert "net_amount" in conf["missing_required"] and conf["level"] == "low"
 
 
 def ctx(existing=()):

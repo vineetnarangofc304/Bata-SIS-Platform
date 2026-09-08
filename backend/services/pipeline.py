@@ -317,15 +317,27 @@ async def load_to_reporting(batch_id, by="system"):
                  f"/batches/{batch_id}", batch_id=batch_id, roles=["admin", "ops", "management"], severity="success" if status == "Successfully Processed" else "warning")
 
 
+def week_of(sd):
+    """Bata week: Monday-based, week 1 = Jan 1 to first Sunday (matches Date Mapping template)."""
+    if not sd or len(sd) < 10:
+        return None, None
+    from datetime import date
+    d = date.fromisoformat(sd[:10])
+    jan1 = date(d.year, 1, 1)
+    return d.year, ((d - jan1).days + jan1.weekday()) // 7 + 1
+
+
 def sales_doc(r, batch, partner):
     v, st, sk = r["values"], r.get("resolved_store") or {}, r.get("resolved_sku") or {}
     q, p = v.get("quantity") or 0, v.get("unit_price") or 0
     disc = v.get("discount") or 0
-    return {"id": r["raw_row_id"], "std_row_id": r["id"], "batch_id": batch["id"], "partner_code": partner["code"], "partner_name": partner["name"],
+    sd = v.get("sale_date") or ""
+    yr, wk = week_of(sd)
+    return {"id": r["raw_row_id"], "year": yr, "week": wk, "size": v.get("size"), "color": v.get("color"), "cluster_manager": st.get("cluster_manager"), "std_row_id": r["id"], "batch_id": batch["id"], "partner_code": partner["code"], "partner_name": partner["name"],
             "store_code": st.get("code") or v.get("store_code"), "store_name": st.get("name") or v.get("store_name"), "city": st.get("city") or v.get("city"),
             "region": st.get("region") or v.get("region"), "sale_date": v.get("sale_date"), "month": (v.get("sale_date") or "")[:7],
             "sku": sk.get("code") or v.get("sku"), "article_name": sk.get("name") or v.get("article_name"), "category": sk.get("category") or v.get("category"),
-            "brand": sk.get("brand"), "quantity": q, "mrp": v.get("mrp"), "unit_price": p, "gross_amount": round(q * p, 2), "discount": disc,
+            "brand": sk.get("brand") or v.get("brand"), "quantity": q, "mrp": v.get("mrp"), "unit_price": p, "gross_amount": round(q * p, 2), "discount": disc,
             "discount_pct": round(disc / (q * p) * 100, 2) if q * p else 0, "tax": v.get("tax") or 0, "net_amount": v.get("net_amount") or 0,
             "invoice_no": v.get("invoice_no"), "data_quality": r["status"], "business_key": r.get("business_key"), "row_version": r["version"],
             "created_at": now_iso()}

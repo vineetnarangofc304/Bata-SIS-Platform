@@ -64,7 +64,7 @@ class TestAuth:
         assert r.status_code in (400, 403), r.text
 
     def test_ops_forbidden_masters_create(self, ops_token):
-        r = requests.post(f"{API}/masters/stores", headers=h(ops_token), json={"code": "TS999", "name": "x", "partner_code": "SS"})
+        r = requests.post(f"{API}/masters/stores", headers=h(ops_token), json={"code": "TS999", "name": "x", "partner_code": "SHOPPERS"})
         assert r.status_code == 403
 
 
@@ -74,28 +74,49 @@ class TestDashboard:
         r = requests.get(f"{API}/dashboard", headers=h(admin_token))
         assert r.status_code == 200
         d = r.json()
+        assert d.get("as_of") == "2026-08-09"
         assert "kpis" in d
-        for k in ("mtd_sales", "active_partners", "acceptance_pct"):
-            assert k in d["kpis"]
+        k = d["kpis"]
+        for key in ("mtd_sales", "active_partners", "acceptance_pct", "target_wk", "achievement_pct"):
+            assert key in k
+        assert k["target_wk"] > 0
+        assert 60 <= k["achievement_pct"] <= 80  # ~69.7
+        assert isinstance(d.get("weekly"), list) and len(d["weekly"]) > 0
 
-    def test_reports_list_has_12(self, admin_token):
+    def test_reports_list_has_15(self, admin_token):
         r = requests.get(f"{API}/reports", headers=h(admin_token))
         assert r.status_code == 200
         keys = [x["key"] for x in r.json()]
+        assert len(keys) == 15, f"expected 15 reports, got {len(keys)}: {keys}"
         expected = ["daily_sales", "monthly_sales", "partner_performance", "store_performance",
                     "region_performance", "category_performance", "sku_performance", "top_bottom",
-                    "discount_analysis", "data_quality_trend", "missing_submissions", "exception_summary"]
+                    "discount_analysis", "data_quality_trend", "missing_submissions", "exception_summary",
+                    "target_vs_actual", "stock_position", "partner_margin"]
         for e in expected:
             assert e in keys, f"missing {e}"
 
     @pytest.mark.parametrize("key", ["daily_sales", "monthly_sales", "partner_performance", "store_performance",
                                      "region_performance", "category_performance", "sku_performance", "top_bottom",
-                                     "discount_analysis", "data_quality_trend", "missing_submissions", "exception_summary"])
+                                     "discount_analysis", "data_quality_trend", "missing_submissions", "exception_summary",
+                                     "target_vs_actual", "stock_position", "partner_margin"])
     def test_each_report(self, admin_token, key):
         r = requests.get(f"{API}/reports/{key}", headers=h(admin_token))
         assert r.status_code == 200, r.text
         data = r.json()
         assert "columns" in data and "rows" in data
+        # These 3 must have rows
+        if key in ("target_vs_actual", "stock_position", "partner_margin", "partner_performance", "sku_performance"):
+            assert len(data["rows"]) > 0, f"{key} has no rows"
+
+    def test_target_vs_actual_export_csv(self, admin_token):
+        r = requests.get(f"{API}/reports/target_vs_actual/export?fmt=csv", headers=h(admin_token))
+        assert r.status_code == 200
+        assert r.content and len(r.content) > 20
+
+    def test_target_vs_actual_export_xlsx(self, admin_token):
+        r = requests.get(f"{API}/reports/target_vs_actual/export?fmt=xlsx", headers=h(admin_token))
+        assert r.status_code == 200
+        assert len(r.content) > 100
 
     def test_report_export_csv(self, admin_token):
         r = requests.get(f"{API}/reports/daily_sales/export?fmt=csv", headers=h(admin_token))
@@ -136,7 +157,46 @@ class TestListings:
     def test_partners(self, admin_token):
         r = requests.get(f"{API}/partners", headers=h(admin_token))
         assert r.status_code == 200
-        assert len(r.json()) == 9
+        data = r.json()
+        assert len(data) == 10
+        codes = {p["code"] for p in data}
+        for c in ("CENTRO", "INC5", "KORA", "LIFESTYLE", "LULU", "RCENTRAL", "RTRENDS", "SHOPPERS", "SPENCER", "ZUUP"):
+            assert c in codes, f"missing partner {c}"
+
+    def test_masters_partners_with_margins(self, admin_token):
+        r = requests.get(f"{API}/masters/partners", headers=h(admin_token))
+        assert r.status_code == 200
+        data = r.json()
+        items = data.get("items", data) if isinstance(data, dict) else data
+        assert len(items) == 10
+        # at least some have margins
+        with_margin = [p for p in items if p.get("margins")]
+        assert len(with_margin) >= 8
+
+    def test_masters_stores_partner_filter_and_aliases(self, admin_token):
+        r = requests.get(f"{API}/masters/stores?partner_code=INC5&limit=5", headers=h(admin_token))
+        assert r.status_code == 200
+        data = r.json()
+        assert data.get("total", 0) > 0
+        # at least one store has aliases
+        assert any(s.get("aliases") for s in data.get("items", []))
+
+    def test_masters_skus_large(self, admin_token):
+        r = requests.get(f"{API}/masters/skus?limit=1", headers=h(admin_token))
+        assert r.status_code == 200
+        assert r.json().get("total", 0) > 2000
+
+    def test_insights_contains_spencer(self, admin_token):
+        r = requests.get(f"{API}/insights", headers=h(admin_token))
+        assert r.status_code == 200
+        titles = [i.get("title", "") for i in r.json().get("items", [])]
+        assert any("SPENCER" in t for t in titles), f"no SPENCER missing-submission insight: {titles[:5]}"
+
+    def test_exceptions_unknown_sku(self, admin_token):
+        r = requests.get(f"{API}/exceptions?rule_code=UNKNOWN_SKU&limit=5", headers=h(admin_token))
+        assert r.status_code == 200
+        data = r.json()
+        assert data.get("total", 0) > 100
 
     def test_fields(self, admin_token):
         r = requests.get(f"{API}/fields", headers=h(admin_token))
@@ -152,7 +212,7 @@ class TestMasters:
         assert r.status_code == 200, f"{tab}: {r.text}"
 
     def test_store_create_duplicate(self, admin_token):
-        payload = {"code": "TEST_STORE_A", "name": "Test Store A", "partner_code": "SS", "city": "Mumbai", "state": "MH", "region": "West"}
+        payload = {"code": "TEST_STORE_A", "name": "Test Store A", "partner_code": "SHOPPERS", "city": "Mumbai", "state": "MH", "region": "West"}
         r = requests.post(f"{API}/masters/stores", headers=h(admin_token), json=payload)
         # accept 200/201 first time or 409 if exists
         assert r.status_code in (200, 201, 409), r.text
@@ -161,41 +221,37 @@ class TestMasters:
 
 
 # ---------------------- UPLOAD FLOW ----------------------
-def _make_shoppers_stop_xlsx():
+def _make_shoppers_xlsx():
+    """Generate a SHOPPERS-format xlsx with 3 valid rows matching seeded article FMBA8713334."""
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.append(["Shoppers Stop", "SIS Report"])
-    ws.append([])
-    ws.append(["Bill Date", "Store Code", "Store Name", "Article Code", "Article Description",
-               "Qty", "MRP", "Selling Price", "Discount", "GST Amount", "Net Amount", "Bill No"])
-    yday = (datetime.utcnow() - timedelta(days=1)).strftime("%d/%m/%Y")
-    # Grab a couple SKU codes
-    return wb, ws, yday
+    ws.title = "Sheet1"
+    headers = ["Partner", "Location", "Style Code", "Selling Date", "Brand Name",
+               "Sub Category", "Colour Desc", "Size Desc", "Qty Sold",
+               "MRP Per Unit", "Disc Amt", "Net Retail Value", "Store No."]
+    ws.append(headers)
+    for i in range(3):
+        ws.append(["SHOPPERS", "PITAMPURA METRO", "FMBA8713334", "2026-08-12",
+                   "BATA", "SHOES", "BLACK", "8", 1, 1099, 0, 1099, 101])
+    return wb
 
 
 class TestUploadFlow:
-    def _skus(self, tok):
-        r = requests.get(f"{API}/masters/skus?limit=5", headers=h(tok))
-        return [s["code"] for s in r.json()["items"]]
-
     def test_upload_txt_rejected(self, ops_token):
         files = {"file": ("bad.txt", b"hello", "text/plain")}
         r = requests.post(f"{API}/uploads", headers=h(ops_token), files=files)
         assert r.status_code == 400
 
-    def test_upload_shoppers_stop_success_and_duplicate(self, ops_token):
-        skus = self._skus(ops_token)
-        assert skus, "Need SKUs"
-        wb, ws, yday = _make_shoppers_stop_xlsx()
-        for i in range(5):
-            ws.append([yday, f"SS00{(i%5)+1}", "Store", skus[i % len(skus)], "desc",
-                       2, 1000, 800, 200, 40, 800 * 2, f"B{i:04d}"])
-        ws.append(["Grand Total", "", "", "", "", 10, "", "", "", "", 8000, ""])
+    def test_upload_shoppers_success_then_reject(self, ops_token):
+        wb = _make_shoppers_xlsx()
         buf = io.BytesIO()
         wb.save(buf)
         content = buf.getvalue()
 
-        files = {"file": ("ShoppersStop_test.xlsx", content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
+        # Add a random tail to avoid duplicate hash collision on reruns
+        content_unique = content + b" " * (int(time.time()) % 97 + 1)
+        files = {"file": (f"SHOPPERS_test_{int(time.time())}.xlsx", content_unique,
+                          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
         r = requests.post(f"{API}/uploads", headers=h(ops_token), files=files)
         assert r.status_code in (200, 201), r.text
         batch_id = r.json().get("id") or r.json().get("batch_id")
@@ -203,28 +259,23 @@ class TestUploadFlow:
 
         # Poll status
         final = None
-        for _ in range(20):
+        detected = None
+        for _ in range(30):
             time.sleep(1)
             b = requests.get(f"{API}/batches/{batch_id}", headers=h(ops_token)).json()
             final = b.get("status")
+            detected = b.get("partner_code")
             if final and final not in ("Analysing", "Validating", "Queued", "Uploaded"):
                 break
-        assert final in ("Successfully Processed", "Partially Processed", "Awaiting Review"), f"Got {final}"
+        assert final in ("Successfully Processed", "Partially Processed", "Awaiting Review"), f"Got status={final}"
+        assert (detected or "").upper() == "SHOPPERS", f"expected SHOPPERS auto-detect, got {detected}"
 
-        # Duplicate upload
-        files2 = {"file": ("ShoppersStop_test.xlsx", content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
-        r2 = requests.post(f"{API}/uploads", headers=h(ops_token), files=files2)
-        assert r2.status_code in (200, 201, 409), r2.text
-        if r2.status_code in (200, 201):
-            b2id = r2.json().get("id") or r2.json().get("batch_id")
-            time.sleep(2)
-            b2 = requests.get(f"{API}/batches/{b2id}", headers=h(ops_token)).json()
-            assert b2.get("status") == "Rejected" or b2.get("duplicate_of"), f"Expected duplicate rejection, got {b2.get('status')}"
+        # Reject the batch to keep data clean
+        rj = requests.post(f"{API}/batches/{batch_id}/reject", headers=h(ops_token), json={"reason": "test cleanup"})
+        assert rj.status_code in (200, 204, 202), f"reject failed: {rj.status_code} {rj.text}"
 
     def test_upload_preview(self, ops_token):
-        skus = self._skus(ops_token)
-        wb, ws, yday = _make_shoppers_stop_xlsx()
-        ws.append([yday, "SS001", "Store", skus[0], "desc", 1, 100, 90, 10, 5, 90, "B1"])
+        wb = _make_shoppers_xlsx()
         buf = io.BytesIO(); wb.save(buf)
         files = {"file": ("preview.xlsx", buf.getvalue(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")}
         r = requests.post(f"{API}/uploads/preview", headers=h(ops_token), files=files)

@@ -11,7 +11,9 @@ def _d(days):
 async def compute_insights():
     out = []
     partners = await db.partners.find({"active": True}, {"_id": 0}).to_list(50)
-    since = _d(30)
+    last_sale = await db.sales.find_one({"sale_date": {"$ne": None}}, {"_id": 0, "sale_date": 1}, sort=[("sale_date", -1)])
+    ref = datetime.fromisoformat(last_sale["sale_date"]).replace(tzinfo=timezone.utc) if last_sale else datetime.now(timezone.utc)
+    since = (ref - timedelta(days=30)).strftime("%Y-%m-%d")
     daily = {}
     async for g in db.sales.aggregate([{"$match": {"sale_date": {"$gte": since}}},
                                        {"$group": {"_id": {"p": "$partner_code", "d": "$sale_date"}, "net": {"$sum": "$net_amount"}, "n": {"$sum": 1}}}]):
@@ -32,7 +34,7 @@ async def compute_insights():
                         "description": f"₹{last_v:,.0f} vs 14-day average ₹{mean:,.0f} ({pct:+.0f}%, z={z:.1f}). Statistical threshold: |z|>2 or |Δ|>40%.",
                         "link": {"path": "/reports", "params": {"report": "daily_sales", "partner_code": p["code"], "date_from": last_d, "date_to": last_d}}})
     store_rows = {}
-    async for g in db.sales.aggregate([{"$match": {"sale_date": {"$gte": _d(14)}}},
+    async for g in db.sales.aggregate([{"$match": {"sale_date": {"$gte": (ref - timedelta(days=14)).strftime("%Y-%m-%d")}}},
                                        {"$group": {"_id": {"p": "$partner_code", "s": "$store_code", "n": "$store_name"}, "net": {"$sum": "$net_amount"}}}]):
         store_rows.setdefault(g["_id"]["p"], []).append((g["_id"]["s"], g["_id"]["n"], g["net"]))
     pname = {p["code"]: p["name"] for p in partners}
@@ -40,8 +42,9 @@ async def compute_insights():
         if len(rows) < 3:
             continue
         med = statistics.median(r[2] for r in rows)
-        for code, name, net in rows:
-            if med and net < 0.5 * med:
+        worst = sorted([r for r in rows if med and r[2] < 0.5 * med], key=lambda r: r[2])[:3]
+        for code, name, net in worst:
+            if True:
                 out.append({"id": new_id(), "type": "underperformer", "severity": "warning", "partner_code": pc,
                             "title": f"Underperforming store: {name or code} ({pname.get(pc, pc)})",
                             "metric": {"value": round(net, 2), "baseline": round(med, 2), "pct_change": round((net - med) / med * 100, 1)},
@@ -55,7 +58,7 @@ async def compute_insights():
     for p in partners:
         if p.get("expected_frequency", "daily") == "none":
             continue
-        last = await db.batches.find_one({"partner_code": p["code"], "status": {"$nin": ["Rejected", "Failed"]}}, {"_id": 0, "created_at": 1, "id": 1}, sort=[("created_at", -1)])
+        last = await db.batches.find_one({"partner_code": p["code"], "status": {"$nin": ["Rejected", "Failed"]}, "source": {"$ne": "import"}}, {"_id": 0, "created_at": 1, "id": 1}, sort=[("created_at", -1)])
         if not last or last["created_at"] < cutoff:
             days = (datetime.now(timezone.utc) - datetime.fromisoformat(last["created_at"])).days if last else None
             out.append({"id": new_id(), "type": "missing_submission", "severity": "critical", "partner_code": p["code"],

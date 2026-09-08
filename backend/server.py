@@ -11,7 +11,7 @@ from starlette.middleware.cors import CORSMiddleware
 from core.db import db, client
 from core.storage import init_storage
 from routers import auth_users, ingestion, masters, analytics
-import seed
+import seed_real as seed
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("server")

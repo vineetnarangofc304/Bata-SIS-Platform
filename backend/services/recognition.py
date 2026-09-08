@@ -13,7 +13,9 @@ CANONICAL_FIELDS = [
     {"key": "size", "label": "Size", "type": "string", "required": False},
     {"key": "quantity", "label": "Quantity", "type": "number", "required": True},
     {"key": "mrp", "label": "MRP", "type": "number", "required": False},
-    {"key": "unit_price", "label": "Unit Price", "type": "number", "required": True},
+    {"key": "unit_price", "label": "Unit Price", "type": "number", "required": False},
+    {"key": "brand", "label": "Brand", "type": "string", "required": False},
+    {"key": "color", "label": "Colour", "type": "string", "required": False},
     {"key": "discount", "label": "Discount Amount", "type": "number", "required": False},
     {"key": "tax", "label": "Tax Amount", "type": "number", "required": False},
     {"key": "net_amount", "label": "Net Amount", "type": "number", "required": True},
@@ -46,13 +48,16 @@ async def build_alias_index(partner_code=None) -> dict:
 
 
 async def load_learned(partner_code) -> dict:
-    """Latest approved mapping version for partner: norm header -> {field, version}."""
+    """Latest approved mapping version for partner: norm header -> {field, version}; '__ignored__' -> set of norm headers."""
     if not partner_code:
         return {}
     doc = await db.partner_mappings.find_one({"partner_code": partner_code, "active": True}, {"_id": 0}, sort=[("version", -1)])
     if not doc:
         return {}
-    return {normalize(k): {"field": v, "version": doc["version"]} for k, v in doc["mapping"].items() if v}
+    out = {normalize(k): {"field": v, "version": doc["version"]} for k, v in doc["mapping"].items() if v}
+    out["__ignored__"] = {normalize(h) for h in doc.get("ignored_columns", [])}
+    out["__version__"] = doc["version"]
+    return out
 
 
 def detect_partner(filename, sheets, partners, selected_code, learned_all):
@@ -111,22 +116,27 @@ def map_columns(headers, sample_rows, alias_idx, learned):
         samples = [r.get(h) for r in sample_rows[:8]]
         samples = [s for s in samples if s is not None][:5]
         field, conf, reason = None, 0, "No match found in dictionary or learned mappings"
-        if norm in learned:
-            field, conf = learned[norm]["field"], 97
+        ignored = learned.get("__ignored__", set())
+        if norm in ignored:
+            results.append({"index": i, "source_column": h, "sample_values": [str(s) for s in samples], "proposed_field": None, "confidence": 100,
+                            "reason": f"Ignored in approved mapping (v{learned.get('__version__')})", "action": "ignore", "inferred_type": infer_type(samples)})
+            continue
+        if norm in learned and not norm.startswith("__"):
+            field, conf = learned[norm]["field"], 100
             reason = f"Previously approved mapping for this partner (v{learned[norm]['version']})"
         elif norm in labels_norm or norm in {normalize(f["key"]) for f in CANONICAL_FIELDS}:
-            field, conf, reason = alias_idx.get(norm), 100, "Exact match with Bata standard field"
+            field, conf, reason = alias_idx.get(norm), 98, "Exact match with Bata standard field"
         elif norm in alias_idx:
             field, conf, reason = alias_idx[norm], 94, f"Known alias '{h}' in dictionary"
         elif norm and choices:
             match = process.extractOne(norm, choices, scorer=fuzz.token_set_ratio)
-            if match and match[1] >= 75:
+            if match and match[1] >= 80:
                 field, conf = alias_idx[match[0]], int(match[1] * 0.88)
                 reason = f"Fuzzy match to alias '{match[0]}' ({int(match[1])}% similar)"
         if field:
             inferred = infer_type(samples)
             expected = FIELD_MAP[field]["type"]
-            if inferred != "empty":
+            if inferred != "empty" and conf < 100:
                 if inferred == expected or (expected == "string" and inferred in ("number", "date")):
                     if conf < 100:
                         conf = min(100, conf + 3)

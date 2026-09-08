@@ -4,7 +4,7 @@ import re
 from datetime import datetime, date, timedelta
 import pandas as pd
 
-TOTAL_RE = re.compile(r"^\s*(grand\s+)?(total|sub\s*-?\s*total|summary|closing)\b", re.I)
+TOTAL_RE = re.compile(r"(^\s*(grand\s+)?(total|sub\s*-?\s*total|summary|closing)\b)|(\btotal\s*$)", re.I)
 NUM_CLEAN_RE = re.compile(r"[^\d.\-]")
 DATE_FORMATS = ["%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%d.%m.%Y", "%d-%b-%Y", "%d-%b-%y", "%d %b %Y", "%d/%m/%y",
                 "%Y/%m/%d", "%m/%d/%Y", "%d %B %Y", "%b %d, %Y", "%Y%m%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S",
@@ -98,8 +98,8 @@ def extract_rows(rows, header_idx):
             skipped_blank += 1
             continue
         first = vals[0]
-        is_total = (isinstance(first, str) and TOTAL_RE.match(first)) or (
-            len(vals) <= max(2, len(headers) // 2) and any(isinstance(c, str) and TOTAL_RE.match(c) for c in vals))
+        is_total = (isinstance(first, str) and TOTAL_RE.search(first)) or (
+            len(vals) <= max(2, len(headers) // 2) and any(isinstance(c, str) and TOTAL_RE.search(c) for c in vals))
         if is_total:
             skipped_total += 1
             continue
@@ -119,8 +119,8 @@ def parse_number(v):
     s = str(v).strip()
     if not s:
         return None
-    neg = s.startswith("(") and s.endswith(")")
-    s = NUM_CLEAN_RE.sub("", s.replace(",", ""))
+    neg = (s.startswith("(") and s.endswith(")")) or s.endswith("-")
+    s = NUM_CLEAN_RE.sub("", s.replace(",", "").rstrip("-"))
     if s in ("", "-", "."):
         return None
     try:

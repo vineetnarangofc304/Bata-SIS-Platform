@@ -13,8 +13,16 @@ from services.insights import compute_insights
 router = APIRouter()
 
 
-def _d(days):
-    return (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
+def _d(days, base=None):
+    return ((base or datetime.now(timezone.utc)) - timedelta(days=days)).strftime("%Y-%m-%d")
+
+
+async def ref_dt():
+    """Latest sale date in reporting data — dashboards are 'as of' the data, not the wall clock."""
+    last = await db.sales.find_one({"sale_date": {"$ne": None}}, {"_id": 0, "sale_date": 1}, sort=[("sale_date", -1)])
+    if not last:
+        return datetime.now(timezone.utc)
+    return datetime.fromisoformat(last["sale_date"]).replace(tzinfo=timezone.utc)
 
 
 def sales_match(p: dict):
@@ -52,6 +60,9 @@ REPORTS = {
     "data_quality_trend": {"name": "Data Quality Trend", "special": "dq"},
     "missing_submissions": {"name": "Missing Submission Calendar", "special": "missing"},
     "exception_summary": {"name": "Exception Summary", "special": "exceptions"},
+    "target_vs_actual": {"name": "Target vs Actual (Q2 targets)", "special": "targets"},
+    "stock_position": {"name": "Stock Position (Week 32)", "special": "stock"},
+    "partner_margin": {"name": "Partner Margin Contribution", "special": "margin"},
 }
 
 
@@ -61,6 +72,7 @@ async def list_reports(user=Depends(get_current_user)):
 
 
 async def run_report(key, params):
+    key_ = key
     spec = REPORTS.get(key)
     if not spec:
         raise HTTPException(status_code=404, detail="Unknown report")
@@ -110,6 +122,38 @@ async def run_report(key, params):
         rows = [{"partner_name": g["_id"]["p"], "rule_code": g["_id"]["r"], "severity": g["_id"]["s"], **{k: g[k] for k in ("total", "open", "resolved", "ignored", "rejected")}} async for g in db.exceptions.aggregate(pipe)]
         cols = [("partner_name", "Partner", "string"), ("rule_code", "Rule", "string"), ("severity", "Severity", "string"), ("total", "Total", "int"), ("open", "Open", "int"), ("resolved", "Resolved", "int"), ("ignored", "Ignored", "int"), ("rejected", "Rejected", "int")]
         return {"key": key, "name": spec["name"], "columns": [{"key": c[0], "label": c[1], "type": c[2]} for c in cols], "rows": rows}
+    if spec.get("special") == "targets":
+        pm = {"partner_code": params["partner_code"]} if params.get("partner_code") else {}
+        week = int(params.get("week") or 32)
+        tg = {(g["_id"]["p"], g["_id"]["n"]): g async for g in db.targets.aggregate([{"$match": {"week": week, **pm}}, {"$group": {"_id": {"p": "$partner_code", "n": "$partner_name"}, "target": {"$sum": "$target"}, "stores": {"$addToSet": "$store_code"}}}])}
+        ac = {g["_id"]: g async for g in db.sales.aggregate([{"$match": {"year": 2026, "week": week, **pm}}, {"$group": {"_id": "$partner_code", "net": {"$sum": "$net_amount"}, "qty": {"$sum": "$quantity"}, "stores": {"$addToSet": "$store_code"}}}])}
+        rows = []
+        for (pc, pn), g in tg.items():
+            a = ac.get(pc, {"net": 0, "qty": 0, "stores": []})
+            rows.append({"partner_code": pc, "partner_name": pn, "week": week, "target": round(g["target"], 2), "actual": round(a["net"], 2), "achievement_pct": round(a["net"] / g["target"] * 100, 1) if g["target"] else 0,
+                         "gap": round(a["net"] - g["target"], 2), "target_stores": len(g["stores"]), "reporting_stores": len(a["stores"]), "quantity": a["qty"]})
+        rows.sort(key=lambda r: -r["achievement_pct"])
+        cols = [("partner_name", "Partner", "string"), ("week", "Week", "int"), ("target_stores", "Target stores", "int"), ("reporting_stores", "Stores reported", "int"), ("target", "Target (₹)", "money"), ("actual", "Actual NSV (₹)", "money"), ("gap", "Gap (₹)", "money"), ("achievement_pct", "Achievement %", "pct"), ("quantity", "Pairs", "int")]
+        return {"key": key_, "name": spec["name"], "columns": [{"key": c[0], "label": c[1], "type": c[2]} for c in cols], "rows": rows}
+    if spec.get("special") == "stock":
+        m = {k: params[k] for k in ("partner_code", "store_code", "region") if params.get(k)}
+        rows = [{"partner_name": g["_id"]["p"], "store_code": g["_id"]["s"], "store_name": g["_id"]["n"], "region": g["_id"]["r"], "articles": len(g["arts"]), "stock_qty": g["qty"]} async for g in db.stock.aggregate([{"$match": m}, {"$group": {"_id": {"p": "$partner_name", "s": "$store_code", "n": "$store_name", "r": "$region"}, "qty": {"$sum": "$quantity"}, "arts": {"$addToSet": "$sku"}}}, {"$sort": {"qty": -1}}])]
+        sold = {(g["_id"]["p"], g["_id"]["s"]): g["q"] async for g in db.sales.aggregate([{"$match": {"year": 2026, "week": 32}}, {"$group": {"_id": {"p": "$partner_name", "s": "$store_code"}, "q": {"$sum": "$quantity"}}}])}
+        for r in rows:
+            r["sold_wk32"] = sold.get((r["partner_name"], r["store_code"]), 0)
+            r["weeks_cover"] = round(r["stock_qty"] / r["sold_wk32"], 1) if r["sold_wk32"] else None
+        cols = [("partner_name", "Partner", "string"), ("store_code", "Store", "string"), ("store_name", "Store Name", "string"), ("region", "Region", "string"), ("articles", "Articles", "int"), ("stock_qty", "Stock (pairs)", "int"), ("sold_wk32", "Sold Wk32", "int"), ("weeks_cover", "Weeks cover", "int")]
+        return {"key": key_, "name": spec["name"], "columns": [{"key": c[0], "label": c[1], "type": c[2]} for c in cols], "rows": rows}
+    if spec.get("special") == "margin":
+        mg = {(m["partner_code"], m["market"]): m["margin"] async for m in db.margins.find({}, {"_id": 0})}
+        rows = []
+        async for g in db.sales.aggregate([{"$match": sales_match(params)}, {"$group": {"_id": {"p": "$partner_code", "n": "$partner_name", "hp": {"$regexMatch": {"input": {"$ifNull": ["$brand", ""]}, "regex": "hush", "options": "i"}}}, "net": {"$sum": "$net_amount"}, "qty": {"$sum": "$quantity"}}}]):
+            market = "HP" if g["_id"]["hp"] else "BATA"
+            m = mg.get((g["_id"]["p"], market))
+            rows.append({"partner_name": g["_id"]["n"], "market": market, "net_amount": round(g["net"], 2), "quantity": g["qty"], "margin_pct": round((m or 0) * 100, 1) if m is not None else None, "partner_margin": round(g["net"] * m, 2) if m is not None else None, "bata_net": round(g["net"] * (1 - m), 2) if m is not None else None})
+        rows.sort(key=lambda r: -r["net_amount"])
+        cols = [("partner_name", "Partner", "string"), ("market", "Market", "string"), ("net_amount", "NSV (₹)", "money"), ("quantity", "Pairs", "int"), ("margin_pct", "Margin %", "pct"), ("partner_margin", "Partner margin (₹)", "money"), ("bata_net", "Bata net (₹)", "money")]
+        return {"key": key_, "name": spec["name"], "columns": [{"key": c[0], "label": c[1], "type": c[2]} for c in cols], "rows": rows}
     match = sales_match(params)
     pipe = [{"$match": match}, {"$group": {"_id": spec["group"], **SUM}}]
     rows = []
@@ -196,7 +240,8 @@ async def delete_view(view_id: str, user=Depends(get_current_user)):
 @router.get("/dashboard")
 async def dashboard(request: Request, user=Depends(get_current_user)):
     params = dict(request.query_params)
-    today = datetime.now(timezone.utc)
+    today = await ref_dt()
+    now_wall = datetime.now(timezone.utc)
     month = today.strftime("%Y-%m")
     first_prev = (today.replace(day=1) - timedelta(days=1)).strftime("%Y-%m")
     pm = {"partner_code": params["partner_code"]} if params.get("partner_code") else {}
@@ -207,25 +252,29 @@ async def dashboard(request: Request, user=Depends(get_current_user)):
     cur, prev = await total(month), await total(first_prev)
     prev_to_date = [g async for g in db.sales.aggregate([{"$match": {"month": first_prev, "sale_date": {"$lte": (today - timedelta(days=30)).strftime("%Y-%m-%d")}, **pm}}, {"$group": {"_id": None, "net": {"$sum": "$net_amount"}}}])]
     ptd = prev_to_date[0]["net"] if prev_to_date else 0
-    since30 = (today - timedelta(days=30)).isoformat()
+    since30 = (now_wall - timedelta(days=30)).isoformat()
     bq = {"created_at": {"$gte": since30}, "status": {"$nin": ["Rejected"]}, **pm}
     bagg = [g async for g in db.batches.aggregate([{"$match": bq}, {"$group": {"_id": None, "total": {"$sum": "$counts.total"}, "acc": {"$sum": "$counts.accepted"}, "warn": {"$sum": "$counts.warning"}, "rej": {"$sum": "$counts.rejected"}, "dup": {"$sum": "$counts.duplicate"}, "n": {"$sum": 1}}}])]
     b = bagg[0] if bagg else {"total": 0, "acc": 0, "warn": 0, "rej": 0, "dup": 0, "n": 0}
     partners = await db.partners.find({"active": True}, {"_id": 0, "code": 1, "name": 1}).to_list(50)
-    active_partners = await db.batches.distinct("partner_code", {"created_at": {"$gte": (today - timedelta(days=7)).isoformat()}, "status": {"$nin": ["Rejected"]}})
-    daily = [{"date": g["_id"], "net": round(g["net"], 2), "qty": g["qty"]} async for g in db.sales.aggregate([{"$match": {"sale_date": {"$gte": _d(30)}, **pm}}, {"$group": {"_id": "$sale_date", "net": {"$sum": "$net_amount"}, "qty": {"$sum": "$quantity"}}}, {"$sort": {"_id": 1}}])]
-    by_partner = [{"partner": g["_id"], "net": round(g["net"], 2), "qty": g["qty"]} async for g in db.sales.aggregate([{"$match": {"sale_date": {"$gte": _d(30)}}}, {"$group": {"_id": "$partner_name", "net": {"$sum": "$net_amount"}, "qty": {"$sum": "$quantity"}}}, {"$sort": {"net": -1}}])]
-    by_category = [{"category": g["_id"], "net": round(g["net"], 2)} async for g in db.sales.aggregate([{"$match": {"sale_date": {"$gte": _d(30)}, **pm}}, {"$group": {"_id": "$category", "net": {"$sum": "$net_amount"}}}, {"$sort": {"net": -1}}, {"$limit": 8}])]
-    dq_trend = [{"date": g["_id"], "accepted": g["acc"] + g["warn"], "rejected": g["rej"], "duplicate": g["dup"]} async for g in db.batches.aggregate([{"$match": {"created_at": {"$gte": (today - timedelta(days=14)).isoformat()}, "status": {"$nin": ["Rejected"]}, **pm}}, {"$group": {"_id": {"$substr": ["$created_at", 0, 10]}, "acc": {"$sum": "$counts.accepted"}, "warn": {"$sum": "$counts.warning"}, "rej": {"$sum": "$counts.rejected"}, "dup": {"$sum": "$counts.duplicate"}}}, {"$sort": {"_id": 1}}])]
+    active_partners = await db.batches.distinct("partner_code", {"created_at": {"$gte": (now_wall - timedelta(days=14)).isoformat()}, "status": {"$nin": ["Rejected"]}, "source": {"$ne": "import"}})
+    daily = [{"date": g["_id"], "net": round(g["net"], 2), "qty": g["qty"]} async for g in db.sales.aggregate([{"$match": {"sale_date": {"$gte": _d(30, today)}, **pm}}, {"$group": {"_id": "$sale_date", "net": {"$sum": "$net_amount"}, "qty": {"$sum": "$quantity"}}}, {"$sort": {"_id": 1}}])]
+    weekly = [{"week": f"{g['_id']['y']}-W{g['_id']['w']:02d}", "net": round(g["net"], 2), "qty": g["qty"]} async for g in db.sales.aggregate([{"$match": {"year": {"$ne": None}, **pm}}, {"$group": {"_id": {"y": "$year", "w": "$week"}, "net": {"$sum": "$net_amount"}, "qty": {"$sum": "$quantity"}}}, {"$sort": {"_id.y": 1, "_id.w": 1}}])]
+    by_partner = [{"partner": g["_id"], "net": round(g["net"], 2), "qty": g["qty"]} async for g in db.sales.aggregate([{"$match": {"sale_date": {"$gte": _d(30, today)}}}, {"$group": {"_id": "$partner_name", "net": {"$sum": "$net_amount"}, "qty": {"$sum": "$quantity"}}}, {"$sort": {"net": -1}}])]
+    by_category = [{"category": g["_id"], "net": round(g["net"], 2)} async for g in db.sales.aggregate([{"$match": {"sale_date": {"$gte": _d(30, today)}, **pm}}, {"$group": {"_id": "$category", "net": {"$sum": "$net_amount"}}}, {"$sort": {"net": -1}}, {"$limit": 8}])]
+    dq_trend = [{"date": g["_id"] or "—", "accepted": g["acc"] + g["warn"], "rejected": g["rej"], "duplicate": g["dup"]} async for g in db.batches.aggregate([{"$match": {"status": {"$nin": ["Rejected"]}, "source": {"$ne": "import"}, **pm}}, {"$group": {"_id": "$partner_name", "acc": {"$sum": "$counts.accepted"}, "warn": {"$sum": "$counts.warning"}, "rej": {"$sum": "$counts.rejected"}, "dup": {"$sum": "$counts.duplicate"}}}, {"$sort": {"acc": -1}}])]
     recent = await db.batches.find(pm, {"_id": 0, "id": 1, "file_name": 1, "partner_name": 1, "status": 1, "counts": 1, "confidence": 1, "created_at": 1}).sort("created_at", -1).limit(8).to_list(8)
     open_exc = await db.exceptions.count_documents({"status": "open", **pm})
     awaiting = await db.batches.count_documents({"status": "Awaiting Review", **pm})
-    top_skus = [{"sku": g["_id"]["s"], "name": g["_id"]["n"], "net": round(g["net"], 2), "qty": g["qty"]} async for g in db.sales.aggregate([{"$match": {"sale_date": {"$gte": _d(30)}, **pm}}, {"$group": {"_id": {"s": "$sku", "n": "$article_name"}, "net": {"$sum": "$net_amount"}, "qty": {"$sum": "$quantity"}}}, {"$sort": {"net": -1}}, {"$limit": 5}])]
-    return {"kpis": {"mtd_sales": round(cur["net"], 2), "mtd_qty": cur["qty"], "mtd_txns": cur["n"], "prev_month_sales": round(prev["net"], 2),
+    top_skus = [{"sku": g["_id"]["s"], "name": g["_id"]["n"], "net": round(g["net"], 2), "qty": g["qty"]} async for g in db.sales.aggregate([{"$match": {"sale_date": {"$gte": _d(30, today)}, **pm}}, {"$group": {"_id": {"s": "$sku", "n": "$article_name"}, "net": {"$sum": "$net_amount"}, "qty": {"$sum": "$quantity"}}}, {"$sort": {"net": -1}}, {"$limit": 5}])]
+    tv = (await run_report("target_vs_actual", {"week": 32, **pm}))["rows"]
+    t_sum, a_sum = sum(r["target"] for r in tv), sum(r["actual"] for r in tv)
+    return {"as_of": today.strftime("%Y-%m-%d"), "kpis": {"mtd_sales": round(cur["net"], 2), "mtd_qty": cur["qty"], "mtd_txns": cur["n"], "prev_month_sales": round(prev["net"], 2), "month": month,
+                     "target_wk": round(t_sum, 2), "actual_wk": round(a_sum, 2), "achievement_pct": round(a_sum / t_sum * 100, 1) if t_sum else None,
                      "mtd_change_pct": round((cur["net"] - ptd) / ptd * 100, 1) if ptd else None, "active_partners": len(active_partners), "total_partners": len(partners),
                      "rows_30d": b["total"], "accepted_30d": b["acc"] + b["warn"], "rejected_30d": b["rej"], "duplicate_30d": b["dup"], "batches_30d": b["n"],
                      "acceptance_pct": round((b["acc"] + b["warn"]) / b["total"] * 100, 1) if b["total"] else 0, "open_exceptions": open_exc, "awaiting_review": awaiting},
-            "daily": daily, "by_partner": by_partner, "by_category": by_category, "dq_trend": dq_trend, "recent_batches": recent, "top_skus": top_skus}
+            "daily": daily, "weekly": weekly[-40:], "by_partner": by_partner, "by_category": by_category, "dq_trend": dq_trend, "recent_batches": recent, "top_skus": top_skus}
 
 
 @router.get("/insights")

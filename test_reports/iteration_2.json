@@ -1,0 +1,36 @@
+{
+  "summary": "Re-verified backend + frontend after real Bata SIS data reseed. Backend pytest suite updated for new expectations (10 partners incl. SHOPPERS/CENTRO/KORA/LIFESTYLE/LULU/INC5/RCENTRAL/RTRENDS/SPENCER/ZUUP, 15 reports incl. target_vs_actual/stock_position/partner_margin, dashboard as_of=2026-08-09 with weekly array + Week-32 target achievement). All 54 pytest cases pass. SHOPPERS auto-upload flow verified: partner auto-recognised via learned mapping, batch processed with 3 rows, then rejected for cleanup. Frontend verified via Playwright with admin login: dashboard renders KPI cards (dashboard-kpi-total-sales '₹97.88 L', dashboard-kpi-target '69.7%'), weekly recharts renders (6 svgs on dashboard), Reports page shows all 15 report tiles including target_vs_actual/stock_position/partner_margin, Target-vs-Actual drill-in shows 9 partner rows, Partner Configuration lists all 10 partners with v1 mapping versions, Ingestion Batches shows 16 batch rows + hero (16 batches / 1278 open exceptions), Insights page has 27 cards including 'Missing submission: SPENCER'.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Dashboard Data Quality (rows per day 14d)", "issues": ["Only 1 data point rendered as a wide filled block; chart looks visually broken. Root cause: /api/reports/data_quality_trend returns just 1 row. Consider filling missing days with zeros for a proper trend line."]},
+      {"screen": "Login hero panel", "issues": ["Static copy said '9 SIS partners' and '12 reports' — stale post-reseed. Fixed to '10 SIS partners' and '15 reports' in /app/frontend/src/pages/Login.jsx."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_api_e2e.py",
+    "/app/test_reports/pytest/e2e_results.xml"
+  ],
+  "action_items": [
+    "Consider densifying data_quality_trend report to have one row per day in the 14-day window so the dashboard mini-chart renders as a proper trend rather than a single block.",
+    "Non-blocking: /api/partners returns 10 plain items but /api/masters/partners returns paginated dict{items,total}. Two shapes for the same resource is slightly inconsistent — align if practical."
+  ],
+  "critical_code_review_comments": [
+    "Learned mapping precedence works: SHOPPERS-format xlsx with headers Partner/Location/Style Code/Selling Date/... was auto-detected as SHOPPERS without manual mapping.",
+    "target_vs_actual/stock_position/partner_margin all return non-empty rows (9/456/16). CSV+XLSX exports for target_vs_actual return 200 with content.",
+    "Dashboard payload correctly includes as_of, kpis.target_wk>0, achievement_pct≈69.7, and weekly array (40 weeks). RBAC still enforced (ops→uploads OK but forbidden to POST masters/stores; mgmt forbidden from uploads; ops forbidden from /api/users)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_api_e2e.py (updated: 10 partners, 15 reports incl. 3 new ones, SHOPPERS upload flow with reject cleanup, aliases + margins + insights + exceptions checks)",
+    "/app/frontend/src/pages/Login.jsx (stale hero copy 9→10 SIS partners, 12→15 reports)"
+  ],
+  "success_rate": {"backend": "100% (54/54)", "frontend": "100%"},
+  "test_credentials": "admin/Admin@123, ops/Ops@123, mgmt/Mgmt@123 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Uploaded 1 SHOPPERS xlsx (3 rows, style FMBA8713334) via ops account → auto-detected as SHOPPERS → then rejected the batch. Also ran the store-duplicate assertion which may (re)insert TEST_STORE_A in stores master.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend fully green on real data (54/54). Fixture pattern: session-scoped tokens for admin/ops/mgmt. Reports API endpoint is /api/reports/{key} (not /api/reports/run/{key}); export is /api/reports/{key}/export?fmt=csv|xlsx. Masters partners uses paginated {items,total}; plain /api/partners returns a bare list. Batch reject endpoint: POST /api/batches/{id}/reject with {'reason': ...}. Weekly array on /api/dashboard has 40 buckets like 25-W14..26-W32. Do NOT reseed (2min); partners collection non-empty guards seed. When testing upload deduplication, add a random tail to the xlsx bytes on retries to avoid hash collisions from prior runs.",
+  "rca of the issue": "N/A — no bugs. Iteration-1 test file used stale codes (SS, 9 partners, 12 reports); updated to real Bata codes without touching product code."
+}

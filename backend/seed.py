@@ -37,7 +37,7 @@ SKUS = [("Men's Formal", "Bata", "Bata Ambassador Derby", 2499), ("Men's Formal"
         ("Wellness", "Scholl", "Scholl Comfort Slider", 1599), ("Accessories", "Bata", "Bata Shoe Care Kit", 349), ("Accessories", "Bata", "Bata Leather Belt", 699),
         ("Men's Casual", "Bata", "Bata Chappal Classic", 499), ("Women's Sandals", "Bata", "Bata Kolhapuri Flat", 799), ("Sports", "North Star", "North Star Sport Sandal", 1099)]
 GLOBAL_ALIASES = {
-    "sale_date": ["bill date", "transaction date", "txn date", "sales date", "date of sale", "invoice date", "date", "trans date", "sale dt", "billing date"],
+    "sale_date": ["bill date", "transaction date", "txn date", "sales date", "date of sale", "invoice date", "date", "trans date", "sale dt", "billing date", "billing day", "day of billing", "day of billing date"],
     "store_code": ["store code", "location code", "store id", "site code", "branch code", "outlet code", "shop code", "sis code", "store no", "loc code"],
     "store_name": ["store name", "location", "location name", "store", "site name", "branch", "branch name", "outlet name", "shop name"],
     "sku": ["article code", "vendor article no", "ean / article", "article no", "style code", "item code", "sku code", "sku", "article", "product code", "ean", "art no", "vendor sku", "item no"],

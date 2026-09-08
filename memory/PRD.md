@@ -30,6 +30,13 @@ Enterprise web app (React / FastAPI / MongoDB) that ingests, standardizes, valid
 - Masters admin (stores, SKUs, hierarchy, geo, aliases, rules, sender rules) with versions/import/export; Partner configuration; Email configuration (awaiting credentials); Settings; Audit logs; Notifications (in-app; email/WhatsApp inactive).
 - Seed: 9 partners, 45 stores, 24 SKUs, 60 days synthetic sales, 12 demo scenario files run through the real pipeline.
 
+## Implemented (iteration 2 — real Bata data, 2026-06)
+- Replaced synthetic seed with `seed_real.py`: onboarded the SIS Automation Templates zip (`/app/data/sis`): 10 partners (Cluster Manager Mapping), 551 stores w/ city/state/region/cluster manager, ~4k article master (from 2025 sales + stock + week-32 files), 165k rows of 2025 weekly history (import batches), Q2 targets (`targets`), Week-32 stock (`stock`), partner margins (`margins`).
+- Pre-approved v1 partner mappings for all 9 week-32 formats; the 9 Week-32 files ingested through the live pipeline (all processed; partner-internal article codes flagged as UNKNOWN_SKU warnings, KORA subtotal rows skipped, returns allowed).
+- Engine hardening: learned mapping precedence + ignored columns, 7-digit article extraction, derived unit price, tax-inclusive arithmetic tolerance, trailing-minus numbers, total-row detection anywhere in first cell.
+- New reports: Target vs Actual, Stock Position, Partner Margin (15 total). Dashboard is "as of" latest sale date with weekly Bata-week trend and Week-32 target achievement KPI.
+- Testing agent iteration 2: 54/54 backend + UI flows pass.
+
 ## Backlog (prioritized)
 - P1: Email ingestion connector activation (needs mailbox creds: Graph/Gmail/IMAP); scheduled report emails; missing-submission scheduled job (cron) creating notifications.
 - P1: Real partner formats + Bata masters onboarding via import.

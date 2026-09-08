@@ -29,9 +29,9 @@ export default function Login() {
           <div className="flex items-center gap-3"><div className="h-10 w-10 rounded bg-[#E60000] flex items-center justify-center font-display font-bold text-white text-xl">B</div><span className="font-display text-white font-semibold text-lg">Bata SIS Sales Intelligence</span></div>
           <div className="max-w-lg">
             <h1 className="font-display text-4xl sm:text-5xl font-bold text-white leading-tight">Every partner file. Standardised. Validated. Trusted.</h1>
-            <p className="mt-4 text-slate-300 text-base">Deterministic recognition of 9 SIS partner formats, human-approved corrections, full traceability from report back to source row.</p>
+            <p className="mt-4 text-slate-300 text-base">Deterministic recognition of 10 SIS partner formats, human-approved corrections, full traceability from report back to source row.</p>
             <div className="mt-8 grid grid-cols-3 gap-4">
-              {[["9", "SIS partners"], ["12", "reports"], ["100%", "audit coverage"]].map(([v, l]) => <div key={l} className="border-l-2 border-[#E60000] pl-3"><div className="font-display text-2xl font-bold text-white">{v}</div><div className="text-xs text-slate-400 uppercase tracking-wider">{l}</div></div>)}
+              {[["10", "SIS partners"], ["15", "reports"], ["100%", "audit coverage"]].map(([v, l]) => <div key={l} className="border-l-2 border-[#E60000] pl-3"><div className="font-display text-2xl font-bold text-white">{v}</div><div className="text-xs text-slate-400 uppercase tracking-wider">{l}</div></div>)}
             </div>
           </div>
         </div>
