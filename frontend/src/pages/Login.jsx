@@ -26,7 +26,7 @@ export default function Login() {
         <img src={HERO} alt="Bata retail store" className="absolute inset-0 h-full w-full object-cover opacity-40" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/60 to-transparent" />
         <div className="relative z-10 h-full flex flex-col justify-between p-12">
-          <div className="flex items-center gap-3"><div className="h-10 w-10 rounded bg-[#E60000] flex items-center justify-center font-display font-bold text-white text-xl">B</div><span className="font-display text-white font-semibold text-lg">Bata SIS Sales Intelligence</span></div>
+          <div className="flex items-center gap-4"><img src="/bata-logo-white.svg" alt="Bata" className="h-9 w-auto" data-testid="login-logo" /><span className="font-display text-white font-semibold text-lg border-l border-white/30 pl-4">SIS Sales Intelligence</span></div>
           <div className="max-w-lg">
             <h1 className="font-display text-4xl sm:text-5xl font-bold text-white leading-tight">Every partner file. Standardised. Validated. Trusted.</h1>
             <p className="mt-4 text-slate-300 text-base">Deterministic recognition of 10 SIS partner formats, human-approved corrections, full traceability from report back to source row.</p>
@@ -38,6 +38,7 @@ export default function Login() {
       </div>
       <div className="flex items-center justify-center p-8 bg-white">
         <form onSubmit={submit} className="w-full max-w-sm fade-up" data-testid="login-form">
+          <img src="/bata-logo.svg" alt="Bata" className="h-8 w-auto mb-6 lg:hidden" />
           <div className="h-1 w-12 bg-[#E60000] mb-6" />
           <h2 className="font-display text-2xl font-bold text-slate-900">Sign in</h2>
           <p className="text-sm text-slate-500 mt-1">Use your Bata SIS platform credentials.</p>

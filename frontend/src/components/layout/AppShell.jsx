@@ -42,8 +42,8 @@ export default function AppShell() {
       <aside className="w-60 shrink-0 bg-[#111827] text-slate-300 flex flex-col fixed inset-y-0 left-0 z-20" data-testid="sidebar">
         <div className="h-1 bg-[#E60000]" />
         <div className="px-5 py-5 flex items-center gap-3 border-b border-white/5">
-          <div className="h-9 w-9 rounded bg-[#E60000] flex items-center justify-center font-display font-bold text-white text-lg">B</div>
-          <div><div className="font-display font-semibold text-white leading-tight">Bata SIS</div><div className="text-[10px] uppercase tracking-widest text-slate-500">Sales Intelligence</div></div>
+          <img src="/bata-logo-white.svg" alt="Bata" className="h-6 w-auto" data-testid="sidebar-logo" />
+          <div className="border-l border-white/15 pl-3"><div className="font-display font-semibold text-white leading-tight text-sm">SIS</div><div className="text-[10px] uppercase tracking-widest text-slate-500">Sales Intelligence</div></div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {NAV.filter((n) => n.roles.includes(user.role)).map((n) => (
