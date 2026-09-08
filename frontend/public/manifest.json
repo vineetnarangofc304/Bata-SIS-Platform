@@ -1,0 +1,9 @@
+{
+  "short_name": "Bata SIS",
+  "name": "Bata SIS Sales Intelligence Platform",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#E60000",
+  "background_color": "#ffffff"
+}

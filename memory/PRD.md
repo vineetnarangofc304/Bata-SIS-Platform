@@ -5,12 +5,12 @@ Enterprise web app (React / FastAPI / MongoDB) that ingests, standardizes, valid
 
 ## User choices
 - Keep React (JavaScript) — no TS conversion. Ship end-to-end slice first.
-- Emergent Object Storage for original files. Emergent key for any future LLM usage.
+- object storage for original files. platform key for any future LLM usage.
 - Demo accounts: admin/Admin@123 (vineetnarangofc@gmail.com), ops/Ops@123, mgmt/Mgmt@123.
 - Partners: Shoppers Stop, Lifestyle, Central, Pantaloons, Reliance Trends, Westside, Max Fashion, Brand Factory, Vishal Mega Mart.
 
 ## Architecture
-- `backend/core`: db (motor), auth (bcrypt + PyJWT, role guards), audit/notify helpers, storage (Emergent object storage).
+- `backend/core`: db (motor), auth (bcrypt + PyJWT, role guards), audit/notify helpers, storage (object storage).
 - `backend/services`: parser (xlsx/xls/csv, header-row detection, blank/total-row skipping, number/date coercion), recognition (canonical fields, alias index, learned mappings, partner detection, column mapping w/ rapidfuzz, confidence), validation (12 rule codes, ValidationContext, business-key dedup), pipeline (create_batch → analyse → approve_mapping → validate → load_to_reporting; restatement supersede; reprocess; revise_row versioning), insights (statistical anomaly rules).
 - `backend/routers`: auth_users, ingestion (uploads, batches, mapping approval, exceptions actions, review queue), masters (8 masters CRUD/import/export/versions, partners, settings, email connector w/ Fernet-encrypted creds, integrations), analytics (dashboard, 12 reports + records drill-down + exports + saved views, insights, data quality, audit logs, notifications).
 - Mongo layers: raw_files → raw_rows → std_rows (versioned, is_current) → sales (reporting) → exceptions → config (partners, stores, skus, aliases, partner_mappings, validation_rules, sender_rules, settings) → audit_logs, notifications.
@@ -40,5 +40,5 @@ Enterprise web app (React / FastAPI / MongoDB) that ingests, standardizes, valid
 ## Backlog (prioritized)
 - P1: Email ingestion connector activation (needs mailbox creds: Graph/Gmail/IMAP); scheduled report emails; missing-submission scheduled job (cron) creating notifications.
 - P1: Real partner formats + Bata masters onboarding via import.
-- P2: WhatsApp alerts, ERP/POS push, BI connector docs, LLM insights / NL query (Emergent key).
+- P2: WhatsApp alerts, ERP/POS push, BI connector docs, LLM insights / NL query (platform key).
 - P2: SSO; PDF export; per-partner validation rule overrides; store-level targets vs actuals.
