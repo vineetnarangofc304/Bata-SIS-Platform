@@ -85,8 +85,22 @@ async def startup():
 async def _seed_safe():
     try:
         await seed.seed()
+        await ensure_admin()
     except Exception as e:
         logger.exception(f"Seed failed: {e}")
+
+
+async def ensure_admin():
+    """Self-heal: if no active administrator exists, restore the configured ADMIN_EMAIL account to admin."""
+    if await db.users.count_documents({"role": "admin", "active": True}):
+        return
+    email = os.environ.get("ADMIN_EMAIL", "").lower()
+    q = {"$or": [{"email": email}, {"username": "admin"}]}
+    res = await db.users.update_one(q, {"$set": {"role": "admin", "active": True}})
+    if res.matched_count:
+        await db.audit_logs.insert_one({"id": __import__("uuid").uuid4().hex, "actor": "system", "action": "user.admin_restored", "entity_type": "user", "entity_id": None,
+                                        "category": "security", "details": {"reason": "no active administrator found at startup"}, "created_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat()})
+        logger.warning("No active admin found — restored administrator role for the configured admin account")
 
 
 @app.on_event("shutdown")

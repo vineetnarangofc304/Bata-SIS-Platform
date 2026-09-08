@@ -107,6 +107,15 @@ async def update_user(user_id: str, body: UserIn, user=Depends(admin_only)):
     if body.role not in ROLES:
         raise HTTPException(status_code=400, detail="Invalid role")
     upd = {"email": body.email.lower(), "name": body.name, "role": body.role, "active": body.active, "updated_at": now_iso()}
+    target = await db.users.find_one({"id": user_id})
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    losing_admin = target["role"] == "admin" and (body.role != "admin" or not body.active)
+    if losing_admin:
+        if target["id"] == user["id"]:
+            raise HTTPException(status_code=400, detail="You cannot remove your own administrator role. Ask another administrator to do it.")
+        if await db.users.count_documents({"role": "admin", "active": True, "id": {"$ne": user_id}}) == 0:
+            raise HTTPException(status_code=400, detail="At least one active administrator must remain.")
     if body.password:
         if len(body.password) < 8:
             raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
