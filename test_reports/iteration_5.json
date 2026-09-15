@@ -1,0 +1,31 @@
+{
+  "summary": "Verified the Login hero-image branding bug fix. RESULT: FIX NOT APPLIED. /app/frontend/src/pages/Login.jsx still references the Unsplash Nike-shoes photo (line 7 HERO constant + line 26 <img src={HERO}>). The <img> has no data-testid='login-hero-image'. Rendered login page still shows Nike/Air Jordan sneakers, not a Bata store. The asset /bata-store.jpg is correctly present in public/ and served with 200 image/jpeg, but nothing in the source code references it. Other pages could not be scanned because the fix on the login page itself has not landed; however sidebar/mobile logos (/bata-logo.svg, /bata-logo-white.svg) load fine and no other src file references unsplash or external image hosts (grep confirmed only Login.jsx).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Login hero image", "issue": "Login.jsx line 7 still hard-codes Unsplash Nike shoes URL (https://images.unsplash.com/photo-1633464129147-...). Rendered login page shows Nike sneakers instead of Bata store. Also missing required data-testid='login-hero-image' on the <img>.", "selector": "img[alt='Bata retail store']", "priority": "HIGH"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Login", "issues": ["Hero imagery is Nike Air Jordan shoes (off-brand for Bata SIS platform)"]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "In /app/frontend/src/pages/Login.jsx: replace line 7 `const HERO = 'https://images.unsplash.com/...';` with `const HERO = '/bata-store.jpg';` (or delete the constant and inline the src)",
+    "Add data-testid='login-hero-image' to the hero <img> on line 26 so downstream tests can target it",
+    "After edit, verify: (a) grep -r 'unsplash' /app/frontend/src returns nothing, (b) rendered login page shows red Bata store signage, (c) img.naturalWidth > 0"
+  ],
+  "critical_code_review_comments": [
+    "The main agent reported this bug as fixed but the source file was never modified — likely an unsaved edit. Please re-apply and confirm the file on disk before handing off.",
+    "The bata-store.jpg asset (447KB) is committed and reachable — only the JSX reference is missing."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (frontend-only)", "frontend": "0% (primary requested check failed)"},
+  "test_credentials": "admin/Admin@123 (not exercised because the failing check is pre-login)",
+  "seed_data_creation": "none",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "After main agent updates Login.jsx: (1) confirm testid selector [data-testid=login-hero-image] resolves and its src ends with /bata-store.jpg, (2) confirm no <img> element on the login DOM has an unsplash.com or otherwise external src, (3) then login as admin/Admin@123 and scan Dashboard, Ingestion Batches, Reports, Insights, Partner Configuration, Settings pages for any external <img> src (should be zero) and confirm sidebar logo renders.",
+  "rca of the issue": "RCA: The Login hero image references a hard-coded Unsplash URL via the HERO constant in Login.jsx (line 7). The proposed fix (point HERO to the local /bata-store.jpg and add data-testid) was never persisted to /app/frontend/src/pages/Login.jsx — the file on disk is unchanged. The asset exists at /app/frontend/public/bata-store.jpg and is served correctly (HTTP 200, image/jpeg). Reproduction: open <REACT_APP_BACKEND_URL>/login → left panel shows Nike Air Jordan sneakers. Mitigation: edit Login.jsx line 7 to `const HERO = '/bata-store.jpg';` and add `data-testid=\"login-hero-image\"` to the <img> on line 26; hot-reload will apply."
+}

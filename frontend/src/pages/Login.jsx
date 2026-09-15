@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { errMsg } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 
-const HERO = "https://images.unsplash.com/photo-1633464129147-777bdcc97c1d?crop=entropy&cs=srgb&fm=jpg&q=85&w=1400";
+const HERO = "/bata-store.jpg";
 
 export default function Login() {
   const { login } = useAuth();
@@ -23,7 +23,7 @@ export default function Login() {
   return (
     <div className="min-h-screen grid lg:grid-cols-[1.1fr_1fr]">
       <div className="relative hidden lg:block bg-[#111827] overflow-hidden">
-        <img src={HERO} alt="Bata retail store" className="absolute inset-0 h-full w-full object-cover opacity-40" />
+        <img src={HERO} alt="Bata retail store" data-testid="login-hero-image" className="absolute inset-0 h-full w-full object-cover opacity-55" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/60 to-transparent" />
         <div className="relative z-10 h-full flex flex-col justify-between p-12">
           <div className="flex items-center gap-4"><img src="/bata-logo-white.svg" alt="Bata" className="h-9 w-auto" data-testid="login-logo" /><span className="font-display text-white font-semibold text-lg border-l border-white/30 pl-4">SIS Sales Intelligence</span></div>

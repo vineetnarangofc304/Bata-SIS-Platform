@@ -1,0 +1,20 @@
+{
+  "summary": "Frontend-only re-verification of Bata login hero image fix. Confirmed on disk and on served preview URL: Login.jsx uses HERO='/bata-store.jpg', <img data-testid='login-hero-image'> renders same-origin /bata-store.jpg with naturalWidth=1600, naturalHeight=1200. Grep of /app/frontend/src for 'unsplash' returned zero matches. Login screenshot shows a Bata retail store interior with visible red 'Bata' branding on the wall (SIS Sales Intelligence header, shoes on white shelving) — not Nike sneakers. Logged in successfully as admin/Admin@123 and inspected Dashboard, Batches, Reports, Insights, Partner Configuration; every <img> src on these pages is same-origin (partner-sync-38.preview.emergentagent.com) — no external hosts, no unsplash. Bug fix verified.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "test_credentials": "admin/Admin@123 works on /login",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Login hero image fix confirmed applied and served. HERO const = '/bata-store.jpg' in /app/frontend/src/pages/Login.jsx. Public asset exists at /app/frontend/public/bata-store.jpg (457KB, 1600x1200). No unsplash references anywhere in /app/frontend/src. All post-login pages use only same-origin images.",
+  "rca of the issue": "Prior iteration_5 reported the fix as 'not applied' due to reading stale content; fresh disk read + fresh browser context in this iteration confirms Bata store image is on disk and rendered."
+}
