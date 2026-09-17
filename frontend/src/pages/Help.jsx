@@ -13,14 +13,17 @@ export default function Help() {
   useEffect(() => { api.get("/ask/help").then((r) => setHelp(r.data)); }, []);
   useEffect(() => {
     if (!help || !hash) return;
-    const el = document.getElementById(hash.slice(1));
+    let id = hash.slice(1);
+    for (const s of help.sections) { const a = s.items.find((i) => i.id === id && i.alias_of); if (a) id = a.alias_of; }
+    const el = document.getElementById(id);
     if (el) { el.scrollIntoView({ behavior: "smooth", block: "start" }); el.classList.add("help-flash"); setTimeout(() => el.classList.remove("help-flash"), 2000); }
   }, [help, hash]);
   const sections = useMemo(() => {
     if (!help) return [];
     const w = q.trim().toLowerCase();
-    if (!w) return help.sections;
-    return help.sections.map((s) => ({ ...s, items: s.items.filter((i) => `${i.title} ${i.body} ${i.formula || ""}`.toLowerCase().includes(w)) })).filter((s) => s.items.length);
+    const real = help.sections.map((s) => ({ ...s, items: s.items.filter((i) => !i.alias_of) }));
+    if (!w) return real;
+    return real.map((s) => ({ ...s, items: s.items.filter((i) => `${i.title} ${i.body} ${i.formula || ""}`.toLowerCase().includes(w)) })).filter((s) => s.items.length);
   }, [help, q]);
   if (!help) return <div className="text-slate-400 text-sm">Loading help…</div>;
   const count = sections.reduce((n, s) => n + s.items.length, 0);
@@ -30,7 +33,7 @@ export default function Help() {
         <div className="relative"><Search className="h-4 w-4 text-slate-400 absolute left-2.5 top-2.5" /><input data-testid="help-search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search formulas, reports, rules…" className={inputCls + " pl-8 w-72"} /></div>} />
       <div className="grid lg:grid-cols-[220px_1fr] gap-6">
         <nav className="card p-2 self-start sticky top-20 hidden lg:block" data-testid="help-toc">
-          {help.sections.map((s) => <a key={s.id} href={`#${s.id}`} className="block px-3 py-1.5 rounded text-[13px] text-slate-700 hover:bg-slate-100">{s.title}<span className="text-slate-400 text-xs"> · {s.items.length}</span></a>)}
+          {help.sections.map((s) => <a key={s.id} href={`#${s.id}`} className="block px-3 py-1.5 rounded text-[13px] text-slate-700 hover:bg-slate-100">{s.title}<span className="text-slate-400 text-xs"> · {s.items.filter((i) => !i.alias_of).length}</span></a>)}
         </nav>
         <div className="space-y-8 min-w-0">
           {q && <div className="text-xs text-slate-500" data-testid="help-search-count">{count} result{count === 1 ? "" : "s"} for “{q}”</div>}

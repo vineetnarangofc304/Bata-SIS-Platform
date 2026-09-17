@@ -97,6 +97,31 @@ ASK = [
 ]
 
 
+SIS_REPORT = [
+    {"id": "sis-report", "title": "What the report is", "body": "A live replica of the Power BI **SIS DASHBOARD 2026 → SALES** matrix built on the SIS Secondary Sales fact table (218k rows: 2025 weeks 1–52 and 2026 weeks 1–16, 8 partners, ~320 stores, article × size × store × week). Every measure below is recomputed on the server for the current hierarchy and slicers; nothing is pre-aggregated or hard-coded. Suffix **-25 / -26** = calendar year of the sale (`YEAR` column); **G** = growth."},
+    {"id": "s-hierarchy", "title": "Hierarchy levels (Hier1–Hier5)", "body": "Up to five row dimensions, exactly like the Power BI field parameters: Market, Partner, Cluster Manager, State, Store Code, Store Name, City, GRPCAT, Category (CAT NAME), Article, Existing vs New, Top Stores, Month, Week, LTL Status. Rows are the distinct combinations of the chosen levels; the ↳ icon drills into a row by adding it as a filter and moving one level down."},
+    {"id": "s-slicers", "title": "Slicers", "body": "Partner, Cluster Manager, Market (BATA / HP), State, City, Store, GRPCAT, Category, Month, Week, LTL, Top Stores, Existing/New — multi-select and **cascading** (each slicer only offers values that exist under the other active slicers). Text search matches store name/code, article, cluster manager or city."},
+    {"id": "s-till-date", "title": "Till Date · Latest Month · Latest Wk", "formula": "TILL DATE = 'Yes' when the week has NSV > 0 in BOTH 2025 and 2026", "body": "Till Date restricts both years to the like-for-like weeks that exist in the current year — use it for a fair NSV G. **Latest Wk** = the highest till-date week (currently Wk 16); **Latest Month** = the month (BMONTH) of that week (Apr). Both mirror the Power BI calculated columns."},
+    {"id": "s-nsv", "title": "NSV-25 / NSV-26", "formula": "NSV-yy = Σ NSV where YEAR = yy", "body": "Net Sales Value reported by the partner (after discount, tax-inclusive). DAX: `CALCULATE(SUM([NSV]), YEAR=\"2026\")`."},
+    {"id": "s-cont_pct", "title": "CONT %", "formula": "CONT % = NSV-26 of the row ÷ NSV-26 of all rows in the current filter", "body": "Share of current-year sales. The Total row is always 100%."},
+    {"id": "s-nsv_g", "title": "NSV G", "formula": "NSV G = (NSV-26 − NSV-25) ÷ NSV-25", "body": "Year-on-year growth. Without the Till Date slicer 2025 contains 52 weeks vs 16 in 2026, so the growth is strongly negative — switch Till Date on for a like-for-like view."},
+    {"id": "s-ltl_g", "title": "LTL G (like-to-like growth)", "formula": "LTL G = (Σ NSV-26 − Σ NSV-25) ÷ Σ NSV-25, rows where LTL = 'LTL' only", "body": "**LTL status** is computed per store × month: `LTL` when the store has non-zero NSV in that month in both 2025 and 2026; `NEW` when only 2026; `CLOSED` when only 2025. LTL G therefore excludes new and closed stores."},
+    {"id": "s-str", "title": "#STR-25 / #STR-26", "formula": "#STR-yy = distinct STORE CODE with NSV > 0 in year yy", "body": "Count of trading stores. In the Total row this is a distinct count across the whole filter — it is not the sum of the rows."},
+    {"id": "s-str_25", "alias_of": "s-str"}, {"id": "s-str_26", "alias_of": "s-str"},
+    {"id": "s-panel", "title": "#PANEL-25 / #PANEL-26", "formula": "#PANEL-yy = Σ over trading stores of Σ over GRPCATs with NSV > 0 of weight, weight = 1.4 for HP MEN else 1.0", "body": "Panels (display units) in operation. A store selling BATA MEN + HP MEN counts 2.4 panels. Only stores with positive NSV in the year count. DAX: `SUMX(VALUES(STORE CODE), IF(StoreSales>0, SUMX(VALUES(GRPCAT), IF(sales>0, IF(GRPCAT=\"HP MEN\",1.4,1),0)),0))`."},
+    {"id": "s-panel_25", "alias_of": "s-panel"}, {"id": "s-panel_26", "alias_of": "s-panel"},
+    {"id": "s-est", "title": "EST (Target)", "formula": "EST = Σ over (store, week) of max(OVERALL TARGET) where YEAR = 2026", "body": "Weekly store targets from the SIS target template (available for weeks 14–26). Taking max per store-week avoids double counting the target that is repeated on every article row."},
+    {"id": "s-est_g", "title": "EST G", "formula": "EST G = NSV-26 ÷ EST − 1", "body": "Achievement against target (−35% = 35% below target). Meaningful when the weeks in scope have targets — use the Week slicer or Latest Wk."},
+    {"id": "s-prod", "title": "PROD/WK-25 / PROD/WK-26 (store productivity per week)", "formula": "PROD/WK-yy = NSV-yy ÷ distinct stores in yy ÷ distinct weeks in yy", "body": "Average NSV per store per week. Store count here includes every store with rows in the year (not only NSV > 0), matching the DAX `DISTINCTCOUNT(STORE CODE)`."},
+    {"id": "s-prod_wk_25", "alias_of": "s-prod"}, {"id": "s-prod_wk_26", "alias_of": "s-prod"},
+    {"id": "s-qty", "title": "QTY-25 / QTY-26 / QTY G / ASP", "formula": "QTY-yy = Σ QTY ; QTY G = (QTY-26 − QTY-25) ÷ QTY-25 ; ASP-yy = NSV-yy ÷ QTY-yy", "body": "Pairs sold and average selling price."},
+    {"id": "s-qty_25", "alias_of": "s-qty"}, {"id": "s-qty_26", "alias_of": "s-qty"}, {"id": "s-qty_g", "alias_of": "s-qty"}, {"id": "s-asp_25", "alias_of": "s-qty"}, {"id": "s-asp_26", "alias_of": "s-qty"},
+    {"id": "s-finance", "title": "Finance measures (Finance column set)", "formula": "MRP VAL = Σ MRP×QTY · GST VAL = Σ NSV − NSV÷(1+rate), rate 5% if unit NSV ≤ 2500 else 18% · TO = NSV − GST VAL + GST REVERSAL · DISC = MRP VAL − TO · DISC% = DISC ÷ MRP VAL", "body": "MARGIN VAL = Σ MRP×partner margin×QTY · PRIM BILLING-26 = MRP VAL − GST VAL − MARGIN VAL (2025 uses the SECONDARY-PRIMARY column) · GST REVERSAL = Σ [GST on MRP − GST on NSV] per row (1.05 / 1.18 factors below/above ₹2,500) · MARGIN REVERSAL = MARGIN VAL − Σ margin×NSV · REALIZED VALUE = PRIM BILLING − DISC + GST REVERSAL + MARGIN REVERSAL · COST VAL = Σ STDCOST×QTY · MARGIN% = (REALIZED − COST VAL) ÷ REALIZED · PRIM BILLING G and TO G are year-on-year growths. These are the exact DAX definitions from the Finance tab; they are pre-computed per row at load and summed."},
+]
+for _k in ("mrp_val_26", "disc_26", "disc_pct_26", "gst_val_26", "margin_val_26", "prim_billing_26", "gst_reversal_26", "margin_reversal_26", "realized_26", "cost_val_26", "margin_pct_26", "mrp_val_25", "disc_25", "disc_pct_25", "prim_billing_25", "realized_25", "margin_pct_25", "prim_billing_g", "to_g"):
+    SIS_REPORT.append({"id": f"s-{_k}", "alias_of": "s-finance"})
+
+
 def build_help():
     rules = [{"id": f"v-{r['code']}", "title": f"{r['code']} — {r['name']}", "body": f"**Severity:** {r['severity']}{' (blocking → row rejected)' if r['blocking'] else ' (row still loads)'}. {r['description']}." + (f" **Parameters:** `{r['params']}`." if r["params"] else "")} for r in DEFAULT_RULES]
     return {"sections": [
@@ -104,6 +129,7 @@ def build_help():
             {"id": "o-data", "title": "Data currently loaded", "body": "10 partners (CENTRO, INC 5, KORA, LIFESTYLE, LULU, R. CENTRAL, R. TRENDS, SHOPPERS, SPENCER, ZUUP), 551 stores with city / state / region / cluster manager, ~2.5k Bata articles, 2025 weekly sales history (Bata standard template) plus 2026 live weekly files, Q2 2026 store × GRPCAT weekly targets, Week-32 closing stock, partner margins."},
             {"id": "o-layers", "title": "Data layers", "body": "raw_files → raw_rows (as received) → std_rows (standardized, versioned, originals preserved) → sales (reporting) · exceptions · masters (partners, stores, articles, aliases, mappings, rules) · audit_logs · notifications."}]},
         {"id": "dashboard", "title": "Dashboard", "intro": "Every KPI and chart on the Dashboard and how it is computed.", "items": DASHBOARD},
+        {"id": "sis", "title": "SIS Secondary Sales Report", "intro": "The Power BI SALES matrix rebuilt natively: hierarchy, slicers and every DAX measure, computed live.", "items": SIS_REPORT},
         {"id": "reports", "title": "Reports", "intro": "All 15 standard reports plus source-record drill-down. Standard metric columns on the sales reports: Qty = Σ quantity · Gross = Σ gross_amount · Discount = Σ discount · Net Sales = Σ net_amount · Txns = row count · Disc % · Avg Ticket. Totals row = Σ of the visible rows.", "items": REPORTS},
         {"id": "formulas", "title": "Formulas & Metrics", "intro": "Exact definitions used everywhere in the platform.", "items": FORMULAS},
         {"id": "pipeline", "title": "Ingestion Pipeline & Recognition", "intro": "How a file becomes reporting data.", "items": PIPELINE},
@@ -124,11 +150,17 @@ def help_text_for_agent():
     lines.append("## Validation rules")
     for r in DEFAULT_RULES:
         lines.append(f"- {r['code']} ({r['severity']}{', blocking' if r['blocking'] else ''}): {r['description']} {r['params'] or ''}")
+    lines.append("## SIS Secondary Sales report (tool sis_sales_report) — measure definitions")
+    for f in SIS_REPORT:
+        if f.get("formula"):
+            lines.append(f"- **{f['title']}**: `{f['formula']}` — {f['body']}")
     lines.append("## Reports (keys for run_report)")
     for r in REPORTS:
         lines.append(f"- {r['id'][2:]}: {r['title']} — {r['body']}")
     lines.append("## Pipeline")
     for p in PIPELINE + EXCEPTIONS + INSIGHTS + ROLES + GLOSSARY:
+        if p.get("alias_of"):
+            continue
         lines.append(f"- {p['title']}: {p['body']}")
     return "\n".join(lines)
 
@@ -138,6 +170,8 @@ def search_help(query: str):
     out = []
     for s in build_help()["sections"]:
         for it in s["items"]:
+            if it.get("alias_of"):
+                continue
             text = f"{s['title']} {it['title']} {it.get('formula', '')} {it['body']}".lower()
             score = sum(text.count(w) for w in q)
             if score:

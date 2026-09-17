@@ -37,6 +37,8 @@ TOOLS = [
     {"type": "function", "function": {"name": "get_exceptions", "description": "Exceptions (validation issues) — summary by rule/partner or the latest individual items.", "parameters": {"type": "object", "properties": {"partner_code": {"type": "string"}, "status": {"type": "string", "description": "open|accepted|corrected|ignored|rejected"}, "rule_code": {"type": "string"}, "mode": {"type": "string", "enum": ["summary", "items"], "default": "summary"}, "limit": {"type": "integer", "default": 20}}}}},
     {"type": "function", "function": {"name": "get_data_quality", "description": "Data-quality overview: acceptance % and avg confidence per partner, exceptions by rule, 30-day trend.", "parameters": {"type": "object", "properties": {}}}},
     {"type": "function", "function": {"name": "get_insights", "description": "Current rule-based anomalies (spikes/drops, underperformers, missing submissions, discount outliers, rejection rates).", "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {"name": "sis_sales_report", "description": "SIS Secondary Sales report (Power BI SALES tab replica): NSV-25/26, NSV G, LTL G, #STR, #PANEL, EST target & EST G, PROD/WK, QTY, ASP plus finance measures (MRP val, discount, GST, primary billing, realized value, margin %). Group by up to 5 of: market, partner, cluster_manager, state, store_code, store_name, city, grpcat, cat_name, article_name, existing_vs_new, top_stores, month, week, ltl. Use till_date='Yes' for like-for-like YoY; latest_wk / latest_month for the latest period. Filters are comma-separated lists.",
+                                      "parameters": {"type": "object", "properties": {"group_by": {"type": "array", "items": {"type": "string"}}, "partner": {"type": "string"}, "cluster_manager": {"type": "string"}, "market": {"type": "string"}, "state": {"type": "string"}, "city": {"type": "string"}, "store_name": {"type": "string"}, "store_code": {"type": "string"}, "grpcat": {"type": "string"}, "cat_name": {"type": "string"}, "month": {"type": "string", "description": "Jan..Dec"}, "week": {"type": "string", "description": "comma-separated week numbers"}, "ltl": {"type": "string", "description": "LTL|NEW|CLOSED"}, "top_stores": {"type": "string", "description": "YES|NO"}, "existing_vs_new": {"type": "string"}, "till_date": {"type": "string", "description": "Yes to compare like-for-like weeks"}, "latest_wk": {"type": "boolean"}, "latest_month": {"type": "boolean"}, "sort_by": {"type": "string"}, "sort_dir": {"type": "string", "enum": ["asc", "desc"]}, "limit": {"type": "integer", "default": 25}}}}},
     {"type": "function", "function": {"name": "search_help", "description": "Search the Help Center for how a KPI, report, formula, rule or screen works.", "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}},
 ]
 
@@ -189,13 +191,23 @@ async def get_insights(**_):
     return {"count": len(items), "items": [{k: i.get(k) for k in ("type", "severity", "partner_code", "title", "description", "metric")} for i in items[:30]]}
 
 
+async def sis_sales_report(group_by=None, limit=25, **f):
+    from routers.sis_report import run_sales_report, HIER
+    p = {k: (",".join(map(str, v)) if isinstance(v, list) else ("1" if v is True else "" if v is False else str(v))) for k, v in f.items() if v not in (None, "")}
+    p["group_by"] = ",".join([d for d in (group_by or []) if d in HIER]) or "cluster_manager"
+    dims, rows, total, _ = await run_sales_report(p)
+    limit = min(int(limit or 25), MAX_ROWS)
+    return {"group_by": dims, "filters": {k: v for k, v in p.items() if k != "group_by"}, "row_count": len(rows), "rows": rows[:limit], "truncated": len(rows) > limit, "total": total,
+            "note": "Growth/pct fields are fractions (0.25 = 25%). Without till_date=Yes, 2025 has 52 weeks vs 16 in 2026."}
+
+
 async def search_help_tool(query, **_):
     return {"results": search_help(query)}
 
 
 DISPATCH = {"get_data_coverage": get_data_coverage, "run_report": run_report_tool, "aggregate_sales": aggregate_sales, "get_dashboard": get_dashboard, "get_targets_vs_actual": get_targets_vs_actual,
             "get_stock": get_stock, "get_margins": get_margins, "list_partners": list_partners, "find_store": find_store, "find_article": find_article, "get_batches": get_batches,
-            "get_exceptions": get_exceptions, "get_data_quality": get_data_quality, "get_insights": get_insights, "search_help": search_help_tool}
+            "get_exceptions": get_exceptions, "get_data_quality": get_data_quality, "get_insights": get_insights, "search_help": search_help_tool, "sis_sales_report": sis_sales_report}
 
 
 async def dispatch(name, args):

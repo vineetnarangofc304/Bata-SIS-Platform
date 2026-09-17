@@ -10,8 +10,9 @@ from fastapi import FastAPI, APIRouter
 from starlette.middleware.cors import CORSMiddleware
 from core.db import db, client
 from core.storage import init_storage
-from routers import auth_users, ingestion, masters, analytics, ask
+from routers import auth_users, ingestion, masters, analytics, ask, sis_report
 import seed_real as seed
+from seed_pbix import seed_pbix
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("server")
@@ -35,6 +36,7 @@ api.include_router(ingestion.router)
 api.include_router(masters.router)
 api.include_router(analytics.router)
 api.include_router(ask.router)
+api.include_router(sis_report.router)
 app.include_router(api)
 
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get("CORS_ORIGINS", "*").split(","),
@@ -87,6 +89,7 @@ async def _seed_safe():
     try:
         await seed.seed()
         await ensure_admin()
+        await seed_pbix()
     except Exception as e:
         logger.exception(f"Seed failed: {e}")
 

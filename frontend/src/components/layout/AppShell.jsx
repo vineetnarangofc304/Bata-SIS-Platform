@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, UploadCloud, Layers, CheckSquare, BarChart3, Sparkles, ShieldCheck, Database, Store, Mail, Users, FileText, Sliders, Bell, LogOut, MessageCircleQuestion, BookOpen } from "lucide-react";
+import { LayoutDashboard, UploadCloud, Layers, CheckSquare, BarChart3, Sparkles, ShieldCheck, Database, Store, Mail, Users, FileText, Sliders, Bell, LogOut, MessageCircleQuestion, BookOpen, TrendingUp } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import { timeAgo } from "@/lib/format";
@@ -14,6 +14,7 @@ const NAV = [
   { to: "/upload", label: "Upload Data", icon: UploadCloud, roles: ["admin", "ops"] },
   { to: "/batches", label: "Ingestion Batches", icon: Layers, roles: ["admin", "ops", "management"] },
   { to: "/review", label: "Review Queue", icon: CheckSquare, roles: ["admin", "ops"], badge: "review" },
+  { to: "/sis-sales", label: "SIS Secondary Sales", icon: TrendingUp, roles: ["admin", "ops", "management"] },
   { to: "/reports", label: "Sales Reports", icon: BarChart3, roles: ["admin", "ops", "management"] },
   { to: "/insights", label: "Insights", icon: Sparkles, roles: ["admin", "ops", "management"] },
   { to: "/data-quality", label: "Data Quality", icon: ShieldCheck, roles: ["admin", "ops", "management"] },

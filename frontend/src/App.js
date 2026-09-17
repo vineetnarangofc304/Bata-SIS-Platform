@@ -20,6 +20,7 @@ import AuditLogs from "@/pages/AuditLogs";
 import Settings from "@/pages/Settings";
 import Ask from "@/pages/Ask";
 import Help from "@/pages/Help";
+import SisSales from "@/pages/SisSales";
 
 function Protected({ roles, children }) {
   const { user, loading } = useAuth();
@@ -46,6 +47,7 @@ function App() {
               <Route path="/batches/:id" element={<BatchDetail />} />
               <Route path="/review" element={<Protected roles={OPS}><ReviewQueue /></Protected>} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/sis-sales" element={<SisSales />} />
               <Route path="/insights" element={<Insights />} />
               <Route path="/data-quality" element={<DataQuality />} />
               <Route path="/masters" element={<Protected roles={ADMIN}><Masters /></Protected>} />
