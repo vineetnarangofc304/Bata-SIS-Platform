@@ -1,0 +1,38 @@
+{
+  "summary": "Tested new SIS Secondary Sales report (backend + frontend). Backend: 20 of 21 pytest cases pass (95%). All /api/sis/meta, /filters (cascading), /sales-report (defaults, till_date, latest_wk, latest_month, multi-level group_by, pagination, sorting, invalid group_by fallback, filter combinations, search) and /export (csv+xlsx with Total row and columns restriction) work. /api/sis/reload correctly returns 403 for ops. FAIL: /api/ask/help section 'sis' contains only 15 non-alias items but the spec (and the UI TOC user-facing count target) expects 20 — 5 measure help cards missing. Frontend: /sis-sales renders full hero bar, filter bar, table with 8 cluster-manager rows + totals row, hierarchy multi-level selectors change dims, till_date/latest_month/latest_wk toggles work (till-date flips NSV Growth to +54%), partner slicer opens panel and applies filter, sort URL param updates and arrow icon appears, column sets sales/finance/all switch columns, column chooser hides columns, drill button adds filter to URL, CSV + XLSX export requests return 200 with correct content-types, mgmt user can access, sis-reset clears URL. Help TOC shows 'SIS Secondary Sales Report · 15' (should be 20 per spec).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/ask/help", "issue": "SIS_REPORT section has only 15 non-alias items; spec requires 20. Missing 5 concept cards under section 'sis' (help_content.py line 100-119). Affects Help TOC count and user-facing help coverage."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "SisTable header (<th>)", "issue": "Clicking the centre of column header triggers the embedded HelpLink (navigates to /help) instead of sorting; sort only works when clicking near the left edge or on the arrow area. Automated tests hit /help by default. Consider e.stopPropagation on HelpLink (already there) but hit target overlaps — recommend wrapping label text in a separate clickable span for sort and keeping HelpLink outside the sort click zone.", "selector": "[data-testid='sis-th-*']", "priority": "MEDIUM"},
+      {"component": "SisSales reset button", "issue": "sis-reset only clears URL search params — it does NOT reset local React state 'hidden' (columns hidden via chooser) or 'colMode'. After hiding a column via chooser + Reset, the column stays hidden.", "selector": "[data-testid='sis-reset']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Help Center TOC", "issues": ["'SIS Secondary Sales Report · 15' — expected · 20 per spec (backend content missing 5 items)"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_sis_report.py", "/app/test_reports/pytest/sis_results.xml"],
+  "action_items": [
+    "Add 5 missing non-alias help cards to SIS_REPORT in /app/backend/services/help_content.py so section 'sis' has 20 non-alias entries (current: sis-report, s-hierarchy, s-slicers, s-till-date, s-nsv, s-cont_pct, s-nsv_g, s-ltl_g, s-str, s-panel, s-est, s-est_g, s-prod, s-qty, s-finance = 15). Candidates likely: s-drill, s-total-row, s-column-sets, s-sort, s-export etc.",
+    "SisTable: prevent HelpLink from overlapping the sort click zone (wrap label in its own clickable span or add stopPropagation and larger sort target).",
+    "SisSales reset button should also clear the local 'hidden' and 'colMode' state so hidden columns re-appear."
+  ],
+  "critical_code_review_comments": [
+    "sis_report.py aggregate() runs 6 group stages over 218k docs for every request — heavy queries (store_name,article_name) take ~10s. Consider adding indexes on store_code, article_name, and precomputing rollups.",
+    "sis_report.py build_match() int() cast on week list will 500 if a caller passes non-numeric week — should be guarded.",
+    "SIS_REPORT help content is incomplete (15/20)."
+  ],
+  "updated_files": ["/app/backend/tests/test_sis_report.py"],
+  "success_rate": {"backend": "95% (20/21)", "frontend": "~95% (all major flows work; 2 minor UX bugs noted)"},
+  "test_credentials": "admin/Admin@123, ops/Ops@123, mgmt/Mgmt@123 (all working)",
+  "seed_data_creation": "none — used existing sis_sales fact (218,447 rows)",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "SIS backend fully verified via /app/backend/tests/test_sis_report.py — run with REACT_APP_BACKEND_URL env var. Heavy group_bys (store_name,article_name) need ~10s wait in UI tests. Pagination via sis-next works but requires 10-12s wait for re-fetch. Column chooser and column-set state is local React state (not URL), so reset button does not clear it. Help alias flash class is removed after 2000ms — check within 2s if verifying help-flash.",
+  "rca of the issue": "help_content.py SIS_REPORT list literally has 15 non-alias objects and 24 alias-only objects (7 inline + 19 appended in for-loop at line 121). Spec expected 20 non-alias cards, so 5 concept/measure cards need to be authored and appended before the alias for-loop."
+}

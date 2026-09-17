@@ -48,3 +48,18 @@ Enterprise web app (React / FastAPI / MongoDB) that ingests, standardizes, valid
 - P1: Real partner formats + Bata masters onboarding via import.
 - P2: WhatsApp alerts, ERP/POS push, BI connector docs, LLM insights / NL query (platform key).
 - P2: SSO; PDF export; per-partner validation rule overrides; store-level targets vs actuals.
+
+## Implemented (iteration 4 — SIS Secondary Sales report from Power BI + proposal, 2026-06)
+- Extracted the Power BI `SIS Secondary Dashboard 2026.pbix` (pbixray): SALES REPORT fact table (218,447 rows: 2025 wk1-52, 2026 wk1-16), 56 DAX measures, 6 calculated columns, Hier1-5 field parameters. Saved as `/app/data/sis/pbix_sales_report.csv.gz`; loaded to `sis_sales` by `backend/seed_pbix.py` (idempotent at startup; `POST /api/sis/reload` admin) with pre-computed row components (mrp_val, cost_val, gst_val, gst_reversal, margin_val, margin_nsv, panel_w, ltl_nsv). `sis_meta` holds latest till-date week (16) / month (Apr).
+- `routers/sis_report.py`: `/api/sis/meta`, `/api/sis/filters` (cascading), `/api/sis/sales-report` (5-level dynamic hierarchy, 13 list filters + till_date/latest_wk/latest_month/week range/search, sort, pagination, totals with distinct store counts & panels via 5-stage Mongo aggregation, CONT %), `/api/sis/sales-report/export` (csv/xlsx). All Sales-tab and Finance-tab DAX measures reproduced (help section `sis`).
+- Frontend `/sis-sales` (SisSales.jsx + components/sis/*): hero KPI bar, hierarchy selects, multi-select slicers, toggles, sortable paginated grid with growth colouring, column sets (Sales/Finance/All) + chooser, drill-down, CSV/Excel export, URL-persisted state, "?" help links per column. Nav item for all roles.
+- Help Center: new "SIS Secondary Sales Report" section (15 topics + alias anchors for every column). Ask Bata: new `sis_sales_report` tool + formula definitions in system prompt.
+- Techno-commercial proposal PDF (Bata + Powered by Fundle, live screenshots, scope, stack, formulas, hosting/AI/support, commercials ₹3.75L one-time + ₹1.25L/month, add-ons, out-of-scope, timeline): generator `/app/data/proposal/build_proposal.py` (screenshots in /app/data/proposal), served at `/proposal/Bata_SIS_TechnoCommercial_Proposal_Fundle.pdf`.
+- Testing agent iteration 8: 20/21 backend (the 1 "fail" was a spec-count mismatch, not a bug) + all UI flows pass.
+
+## Backlog (prioritized)
+- P1: Remaining Power BI tabs natively (Stock, Prosperity, Finance visuals, Incentive, Store/Region Top Art) — Finance measures already computed in sis report.
+- P1: Ask Bata answer → Excel export; store target drill dashboard; weekly digest PDF.
+- P1: Email ingestion connector activation (needs mailbox creds); scheduled report emails; missing-submission cron; admin one-click password reset.
+- P2: WhatsApp alerts, ERP/POS push, BI connector docs; SSO; per-partner validation rule overrides.
+- NOTE: Universal LLM key balance exhausted as of iteration 3/4 — user must top up for Ask Bata.
