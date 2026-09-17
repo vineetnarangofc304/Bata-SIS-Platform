@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, UploadCloud, Layers, CheckSquare, BarChart3, Sparkles, ShieldCheck, Database, Store, Mail, Users, FileText, Sliders, Bell, LogOut } from "lucide-react";
+import { LayoutDashboard, UploadCloud, Layers, CheckSquare, BarChart3, Sparkles, ShieldCheck, Database, Store, Mail, Users, FileText, Sliders, Bell, LogOut, MessageCircleQuestion, BookOpen } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
 import { timeAgo } from "@/lib/format";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { StatusBadge } from "@/components/common/Badges";
+import { AskFab } from "@/components/ask/AskFab";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "ops", "management"] },
+  { to: "/ask", label: "Ask Bata", icon: MessageCircleQuestion, roles: ["admin", "ops", "management"] },
   { to: "/upload", label: "Upload Data", icon: UploadCloud, roles: ["admin", "ops"] },
   { to: "/batches", label: "Ingestion Batches", icon: Layers, roles: ["admin", "ops", "management"] },
   { to: "/review", label: "Review Queue", icon: CheckSquare, roles: ["admin", "ops"], badge: "review" },
@@ -21,6 +23,7 @@ const NAV = [
   { to: "/users", label: "Users & Roles", icon: Users, roles: ["admin"] },
   { to: "/audit", label: "Audit Logs", icon: FileText, roles: ["admin", "ops", "management"] },
   { to: "/settings", label: "Settings", icon: Sliders, roles: ["admin"] },
+  { to: "/help", label: "Help Center", icon: BookOpen, roles: ["admin", "ops", "management"] },
 ];
 
 export default function AppShell() {
@@ -96,6 +99,7 @@ export default function AppShell() {
         </header>
         <main className="p-6 sm:p-8 flex-1"><Outlet context={{ refreshShell: load }} /></main>
       </div>
+      <AskFab />
     </div>
   );
 }

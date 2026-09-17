@@ -281,7 +281,7 @@ async def dashboard(request: Request, user=Depends(get_current_user)):
 async def insights(user=Depends(get_current_user)):
     items = await compute_insights()
     return {"generated_at": now_iso(), "engine": "rule-based statistical thresholds (no LLM)", "items": items,
-            "nl_query": {"status": "deferred", "message": "Natural-language 'Ask Bata Sales Data' is a Phase 2 module. Awaiting LLM enablement."}}
+            "nl_query": {"status": "active", "message": "Natural-language questions are answered by Ask Bata (GPT-5.4 analytics agent) at /ask."}}
 
 
 @router.get("/data-quality")

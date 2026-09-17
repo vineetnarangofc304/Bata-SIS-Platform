@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HelpLink } from "@/components/common/HelpLink";
 
 export function DataTable({ columns, rows, loading, page, pages, total, onPage, rowKey = "id", onRowClick, emptyText = "No records", testId, dense, footer }) {
   return (
@@ -41,12 +42,12 @@ export function PageHeader({ title, sub, actions, testId }) {
   );
 }
 
-export function KpiCard({ label, value, sub, tone = "default", icon: Icon, testId, onClick }) {
+export function KpiCard({ label, value, sub, tone = "default", icon: Icon, testId, onClick, helpId }) {
   const tones = { default: "text-slate-900", red: "text-[#E60000]", green: "text-emerald-600", amber: "text-amber-600" };
   return (
     <div data-testid={testId} onClick={onClick} className={cn("card card-hover p-5 relative overflow-hidden", onClick && "cursor-pointer")}>
       <div className="flex items-start justify-between">
-        <span className="label-caps">{label}</span>
+        <span className="label-caps flex items-center gap-1">{label}{helpId && <HelpLink id={helpId} />}</span>
         {Icon && <Icon className="h-4 w-4 text-slate-400" />}
       </div>
       <div className={cn("font-display text-2xl sm:text-3xl font-bold mt-2 tabular", tones[tone])}>{value}</div>

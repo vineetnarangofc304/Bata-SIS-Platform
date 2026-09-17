@@ -10,7 +10,7 @@ from fastapi import FastAPI, APIRouter
 from starlette.middleware.cors import CORSMiddleware
 from core.db import db, client
 from core.storage import init_storage
-from routers import auth_users, ingestion, masters, analytics
+from routers import auth_users, ingestion, masters, analytics, ask
 import seed_real as seed
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -34,6 +34,7 @@ api.include_router(auth_users.router)
 api.include_router(ingestion.router)
 api.include_router(masters.router)
 api.include_router(analytics.router)
+api.include_router(ask.router)
 app.include_router(api)
 
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=os.environ.get("CORS_ORIGINS", "*").split(","),

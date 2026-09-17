@@ -7,6 +7,7 @@ import { inr, num, pct } from "@/lib/format";
 import { DataTable, PageHeader, selectCls, inputCls } from "@/components/common/DataTable";
 import { StatusBadge } from "@/components/common/Badges";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { HelpLink } from "@/components/common/HelpLink";
 
 const fmt = (v, t) => t === "money" ? inr(v, { decimals: 0 }) : t === "int" ? num(v) : t === "pct" ? pct(v) : t === "calendar" ? (v ? <span className="chip bg-emerald-50 text-emerald-700">{v}</span> : <span className="chip bg-red-50 text-red-600">—</span>) : (v ?? "—");
 const REC_COLS = ["sale_date", "partner_name", "store_code", "store_name", "region", "sku", "article_name", "category", "quantity", "unit_price", "discount", "tax", "net_amount", "invoice_no", "data_quality"];
@@ -47,7 +48,7 @@ export default function Reports() {
   const footer = res?.totals && <tr className="bg-slate-50 font-semibold"><td colSpan={visible.filter((c) => !res.totals[c.key]).length || 1} className="text-xs uppercase text-slate-500">Total</td>{visible.filter((c) => res.totals[c.key] !== undefined).map((c) => <td key={c.key} className="text-right tabular">{fmt(res.totals[c.key], c.type)}</td>)}{visible.filter((c) => res.totals[c.key] === undefined).slice(1).map((c) => <td key={c.key} />)}</tr>;
   return (
     <div data-testid="reports-page">
-      <PageHeader title="Sales Reports" sub="15 standard reports plus source-record drill-down. Every aggregate traces back to the batch and row it came from." actions={<>
+      <PageHeader title={<span className="flex items-center gap-2">Sales Reports<HelpLink id="reports" title="How reports are computed" /></span>} sub="15 standard reports plus source-record drill-down. Every aggregate traces back to the batch and row it came from." actions={<>
         <button data-testid="reports-save-view-btn" onClick={saveView} className="h-9 px-3 rounded-md border text-xs font-medium hover:bg-slate-50 flex items-center gap-1"><Save className="h-3.5 w-3.5" />Save view</button>
         <button data-testid="reports-export-csv-btn" onClick={() => exportIt("csv")} className="h-9 px-3 rounded-md border text-xs font-medium hover:bg-slate-50 flex items-center gap-1"><Download className="h-3.5 w-3.5" />CSV</button>
         <button data-testid="reports-export-excel-btn" onClick={() => exportIt("xlsx")} className="h-9 px-3 rounded-md btn-red text-xs font-semibold flex items-center gap-1"><Download className="h-3.5 w-3.5" />Excel</button></>} />
@@ -70,7 +71,7 @@ export default function Reports() {
             {res && <Popover><PopoverTrigger asChild><button data-testid="reports-columns-btn" className="ml-auto h-9 px-3 rounded-md border text-xs flex items-center gap-1 hover:bg-slate-50"><Columns3 className="h-3.5 w-3.5" />Columns</button></PopoverTrigger><PopoverContent align="end" className="w-56 p-2 text-xs max-h-72 overflow-auto">{res.columns.map((c) => <label key={c.key} className="flex items-center gap-2 px-2 py-1 hover:bg-slate-50 rounded cursor-pointer"><input type="checkbox" data-testid={`column-toggle-${c.key}`} checked={!hidden.includes(c.key)} onChange={(e) => setHidden((h) => e.target.checked ? h.filter((x) => x !== c.key) : [...h, c.key])} className="accent-[#E60000]" />{c.label}</label>)}</PopoverContent></Popover>}
           </div>
           {report === "records" ? <DataTable testId="records-table" dense columns={cols} rows={recs?.items} loading={loading && !recs} page={page} pages={recs?.pages} total={recs?.total} onPage={setPage} />
-            : <><div className="text-xs text-slate-500 mb-2">{res?.name} · {res?.rows?.length ?? 0} rows · click a row to drill down to source records · click headers to sort</div>
+            : <><div className="text-xs text-slate-500 mb-2 flex items-center gap-1.5"><span className="font-semibold text-slate-700">{res?.name}</span><HelpLink id={`r-${report}`} /> · {res?.rows?.length ?? 0} rows · click a row to drill down to source records · click headers to sort</div>
               <DataTable testId="report-table" dense columns={cols} rows={res?.rows} loading={loading && !res} onRowClick={["data_quality_trend", "missing_submissions", "exception_summary", "stock_position"].includes(report) ? undefined : drill} footer={footer} /></>}
         </div>
       </div>

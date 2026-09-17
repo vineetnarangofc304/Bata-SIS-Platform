@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { TrendingUp, TrendingDown, Store, MailX, Percent, Layers, ShieldAlert, MessageSquareDashed } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { TrendingUp, TrendingDown, Store, MailX, Percent, Layers, ShieldAlert, MessageCircleQuestion } from "lucide-react";
+import { HelpLink } from "@/components/common/HelpLink";
 import api from "@/lib/api";
 import { fmtDate } from "@/lib/format";
 import { PageHeader } from "@/components/common/DataTable";
@@ -18,7 +19,7 @@ export default function Insights() {
   const go = (i) => { const p = new URLSearchParams(i.link.params || {}); nav(`${i.link.path}${p.toString() ? `?${p}` : ""}`); };
   return (
     <div data-testid="insights-page">
-      <PageHeader title="Insights & Anomalies" sub={d ? `Rule-based engine · ${d.engine} · generated ${fmtDate(d.generated_at)}` : "Rule-based statistical detection"} />
+      <PageHeader title={<span className="flex items-center gap-2">Insights & Anomalies<HelpLink id="insights" /></span>} sub={d ? `Rule-based engine · ${d.engine} · generated ${fmtDate(d.generated_at)}` : "Rule-based statistical detection"} />
       <div className="flex flex-wrap gap-2 mb-4">
         <button data-testid="insight-filter-all" onClick={() => setType("")} className={`chip px-3 py-1.5 ${!type ? "bg-slate-900 text-white" : "bg-white border"}`}>All ({d?.items.length ?? 0})</button>
         {types.map((t) => <button key={t} data-testid={`insight-filter-${t}`} onClick={() => setType(t)} className={`chip px-3 py-1.5 ${type === t ? "bg-slate-900 text-white" : "bg-white border"}`}>{t.replace(/_/g, " ")} ({d.items.filter((i) => i.type === t).length})</button>)}
@@ -34,11 +35,11 @@ export default function Insights() {
           </button>); })}
         {d && items.length === 0 && <div className="card p-8 text-center text-slate-400 text-sm col-span-full">No anomalies detected for this filter.</div>}
       </div>
-      <div className="card p-5 mt-6 flex items-start gap-4 border-dashed" data-testid="nl-query-stub">
-        <MessageSquareDashed className="h-6 w-6 text-slate-400 shrink-0" />
-        <div><div className="font-display font-semibold text-slate-700">Ask Bata Sales Data <StatusBadge status="deferred" className="ml-2" /></div><div className="text-xs text-slate-500 mt-1">{d?.nl_query.message} All insights above are computed from deterministic statistical thresholds and link to the exact records behind them.</div>
-          <input disabled placeholder='e.g. "Which Lifestyle stores dropped more than 20% last week?"' className="mt-3 w-full max-w-lg h-9 rounded-md border bg-slate-50 px-3 text-sm text-slate-400" data-testid="nl-query-input" /></div>
-      </div>
+      <Link to="/ask" className="card card-hover p-5 mt-6 flex items-start gap-4 border-[#E60000]/30 block" data-testid="nl-query-link">
+        <MessageCircleQuestion className="h-6 w-6 text-[#E60000] shrink-0" />
+        <div><div className="font-display font-semibold text-slate-900">Ask Bata Sales Data <StatusBadge status="active" className="ml-2" /></div><div className="text-xs text-slate-500 mt-1">Ask any question in plain English — e.g. "Which Lifestyle stores dropped more than 20% last week?" The analytics agent queries the same live data behind these insights and shows its workings.</div>
+          <div className="mt-3 text-sm text-[#E60000] font-semibold">Open Ask Bata →</div></div>
+      </Link>
     </div>
   );
 }

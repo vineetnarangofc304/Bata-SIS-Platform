@@ -18,6 +18,8 @@ import EmailConfig from "@/pages/EmailConfig";
 import UsersPage from "@/pages/Users";
 import AuditLogs from "@/pages/AuditLogs";
 import Settings from "@/pages/Settings";
+import Ask from "@/pages/Ask";
+import Help from "@/pages/Help";
 
 function Protected({ roles, children }) {
   const { user, loading } = useAuth();
@@ -52,6 +54,8 @@ function App() {
               <Route path="/users" element={<Protected roles={ADMIN}><UsersPage /></Protected>} />
               <Route path="/audit" element={<AuditLogs />} />
               <Route path="/settings" element={<Protected roles={ADMIN}><Settings /></Protected>} />
+              <Route path="/ask" element={<Ask />} />
+              <Route path="/help" element={<Help />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
