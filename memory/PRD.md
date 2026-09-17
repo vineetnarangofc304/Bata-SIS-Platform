@@ -37,7 +37,13 @@ Enterprise web app (React / FastAPI / MongoDB) that ingests, standardizes, valid
 - New reports: Target vs Actual, Stock Position, Partner Margin (15 total). Dashboard is "as of" latest sale date with weekly Bata-week trend and Week-32 target achievement KPI.
 - Testing agent iteration 2: 54/54 backend + UI flows pass.
 
-## Backlog (prioritized)
+## Implemented (iteration 3 — Ask Bata agent + Help Center, 2026-06)
+- **Ask Bata** analytics agent: GPT-5.4 via Emergent Universal Key (emergentintegrations `LlmChat` streaming + function calling). Backend `routers/ask.py` (sessions CRUD per user in `chat_sessions`/`chat_messages`, SSE `POST /api/ask/sessions/{id}/messages`, suggestions, `/api/ask/help`), `services/agent_tools.py` (15 live-data tools: get_data_coverage, run_report, aggregate_sales, get_dashboard, get_targets_vs_actual (partner/store/grpcat/cluster_manager), get_stock, get_margins, list_partners, find_store, find_article, get_batches, get_exceptions, get_data_quality, get_insights, search_help). System prompt = business brief + exact formula definitions from `services/help_content.py` + live coverage. Never invents numbers; tool calls shown in UI as expandable chips with data preview. Read-only; ingestion engine unchanged (rules only).
+- Frontend: `/ask` page (session list + ChatPanel with streaming markdown, tool chips), floating "Ask Bata" drawer (AskFab) on every page, nav items for all roles; Insights NL stub replaced with link. Friendly error when Universal Key balance is exhausted.
+- **Help Center** `/help`: 11 sections / 80 items (dashboard KPIs, 15 reports + records, 13 formulas, pipeline & recognition confidence, 12 validation rules, exceptions, insights rules, roles, Ask Bata, glossary), search, TOC, hash deep-links with highlight. Contextual `HelpLink` "?" icons on Dashboard KPI cards & chart titles, Reports header + per-report, Insights, Ask page.
+- Testing agent iteration 7: 10/10 backend + all UI flows pass. NOTE: Universal LLM key balance was exhausted during testing — user must top up (Profile → Manage plan → Universal Key → Add Balance).
+
+
 - P1: Email ingestion connector activation (needs mailbox creds: Graph/Gmail/IMAP); scheduled report emails; missing-submission scheduled job (cron) creating notifications.
 - P1: Real partner formats + Bata masters onboarding via import.
 - P2: WhatsApp alerts, ERP/POS push, BI connector docs, LLM insights / NL query (platform key).

@@ -1,0 +1,30 @@
+{
+  "summary": "Iteration 7 - Ask Bata + Help Center. Backend: 10/10 pytest cases pass (help endpoint auth + 11 sections incl. validation with 12 items, suggestions=8, sessions CRUD with owner isolation and cross-user 404, empty-text 400, SSE stream returns error event with 'Universal LLM Key balance is exhausted' followed by done - user message NOT persisted and title stays 'New conversation', existing 'Which partners are behind...' session verified (user+assistant with tools[0].name=='run_report'), insights nl_query.status=='active', regression dashboard/reports/target_vs_actual all 200). Frontend: admin & mgmt logins verified. Sidebar shows nav-ask-bata (2nd) and nav-help-center (last). Floating ask-fab visible on Dashboard. Drawer opens with ask-chat-panel, ask-input, ask-send-btn, ask-drawer-close, ask-drawer-expand - shows 4 compact suggestions. Expand navigates to /ask. Session list contains the existing 'Which partners...' session; clicking it renders ask-user-message + ask-assistant-message with 2 markdown tables and 1 ask-tool-chip that expands (innerHTML 6703 -> 15147). New conversation clears to ask-empty-state with 8 suggestions. Sending 'How is Achievement % calculated?' shows the friendly 'The Universal LLM Key balance is exhausted...' inline as data-testid='ask-error'; input re-enabled; app does not crash. /help shows 11 TOC entries in the exact expected order; searching 'achievement' produces 4 results and help-item-f-achievement visible; deep link /help#f-achievement scrolls and applies help-flash class. Dashboard KPI cards and chart titles all expose help-link-d-sales/target/acceptance/pending/weekly/partner/dq/category/top-skus. Clicking help-link-d-target navigates to /help#d-target (KpiCard's onClick to /reports is correctly stopped via HelpLink stopPropagation). Reports page shows help-link-reports and per-report help-link-r-<key>; switching to report-target_vs_actual updates it to help-link-r-target_vs_actual. Insights shows nl-query-link (href=/ask) and old nl-query-stub is gone. mgmt role has both Ask Bata and Help Center in nav and can access /ask and /help.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/ask/sessions/{sid}", "issue": "message_count counter can drift from actual messages: existing seeded session reports message_count=8 while chat_messages collection has only 2 documents. Counter is $inc'd by 2 per successful turn but is not decremented when messages/session are otherwise manipulated. Not user-visible today, but a self-heal (compute from collection) would be more robust."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/test_ask_help.py", "/app/test_reports/pytest/ask_help.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "routers/ask.py send(): if streaming throws before any TextDelta or tool result, the user message is deleted but the session's message_count could still have been incremented by a previous try; consider derived counts.",
+    "Ask.jsx: clicking 'New conversation' does NOT delete the just-created empty session from the sidebar (title 'New conversation' persists after an exhausted-key attempt). Minor UX — a hidden empty session accumulates per failed attempt.",
+    "ChatPanel.jsx: no visible loading/streaming affordance while waiting for the first SSE event; consider a subtle indicator during streaming=true when msgs are pending.",
+    "Reports.jsx line 46 & 74: extremely long JSX lines (>1000 chars) — hurts maintainability; consider splitting."
+  ],
+  "updated_files": ["/app/backend/tests/test_ask_help.py"],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin/Admin@123, ops/Ops@123, mgmt/Mgmt@123 (all verified)",
+  "seed_data_creation": "None - reused existing 'Which partners are behind...' session for admin user (not deleted).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Existing admin session id (2a309b64-...) with the successful 'Which partners are behind their Week 32 target...' conversation is intact. LLM key still exhausted; SSE returns the friendly exhausted-key error event as expected. All 10 backend tests in /app/backend/tests/test_ask_help.py pass. Frontend: nav-ask-bata is 2nd item, nav-help-center is last; ask-fab is on Dashboard only (per code). Report tabs use pattern report-<key> for all 15 reports; per-report help link uses help-link-r-<key>.",
+  "rca of the issue": "N/A - no blocking bugs. Only cosmetic message_count drift noted as a minor backend nit."
+}
