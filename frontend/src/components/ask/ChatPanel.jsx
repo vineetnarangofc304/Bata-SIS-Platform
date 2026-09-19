@@ -3,6 +3,7 @@ import { Send, Square, Sparkles } from "lucide-react";
 import api from "@/lib/api";
 import { useAskStream } from "./useAskStream";
 import { MessageBubble } from "./MessageBubble";
+import { brand } from "@/lib/brand";
 
 export function ChatPanel({ sessionId, onSessionReady, onFirstMessage, compact }) {
   const [msgs, setMsgs] = useState([]);
@@ -47,7 +48,7 @@ export function ChatPanel({ sessionId, onSessionReady, onFirstMessage, compact }
         {msgs.length === 0 && (
           <div className={`${compact ? "pt-4" : "pt-10"} max-w-2xl mx-auto text-center`} data-testid="ask-empty-state">
             <div className="mx-auto h-12 w-12 rounded-2xl bg-[#E60000]/10 flex items-center justify-center"><Sparkles className="h-6 w-6 text-[#E60000]" /></div>
-            <h2 className="font-display font-semibold text-lg mt-4 text-slate-900">Ask Bata anything about SIS sales</h2>
+            <h2 className="font-display font-semibold text-lg mt-4 text-slate-900">Ask {brand.name} anything about SIS sales</h2>
             <p className="text-sm text-slate-500 mt-1">Targets, stores, articles, stock cover, margins, data quality — answered from live data, with the queries shown.</p>
             <div className="grid sm:grid-cols-2 gap-2 mt-6 text-left">
               {suggestions.slice(0, compact ? 4 : 8).map((s) => <button key={s} data-testid="ask-suggestion" onClick={() => ask(s)} className="card card-hover px-3 py-2.5 text-[13px] text-slate-700 text-left hover:border-[#E60000]/40">{s}</button>)}

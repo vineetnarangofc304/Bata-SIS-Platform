@@ -2,6 +2,7 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ChevronDown, ChevronRight, Database, Loader2, AlertCircle } from "lucide-react";
+import { brand } from "@/lib/brand";
 
 const fmtCell = (v) => v === null || v === undefined ? "—" : typeof v === "number" ? v.toLocaleString("en-IN", { maximumFractionDigits: 2 }) : typeof v === "object" ? JSON.stringify(v) : String(v);
 
@@ -32,7 +33,7 @@ export function MessageBubble({ m }) {
   }
   return (
     <div className="flex gap-3" data-testid="ask-assistant-message">
-      <div className="h-7 w-7 rounded-full bg-[#E60000] text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-1">B</div>
+      <div className="h-7 w-7 rounded-full bg-[#E60000] text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-1">{brand.name[0]}</div>
       <div className="flex-1 min-w-0 space-y-2">
         {m.tools?.length > 0 && <div className="space-y-1" data-testid="ask-tools-used">{m.tools.map((t, i) => <ToolChip key={i} t={t} />)}</div>}
         {m.content ? <div className="prose-chat text-sm text-slate-800"><ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown></div>

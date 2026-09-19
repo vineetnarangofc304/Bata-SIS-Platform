@@ -7,6 +7,7 @@ import { inr, num, pct, fmtDate } from "@/lib/format";
 import { KpiCard, PageHeader, selectCls } from "@/components/common/DataTable";
 import { StatusBadge, Counts, ConfidenceBadge } from "@/components/common/Badges";
 import { HelpLink } from "@/components/common/HelpLink";
+import { brand } from "@/lib/brand";
 
 export default function Dashboard() {
   const [d, setD] = useState(null);
@@ -29,11 +30,11 @@ export default function Dashboard() {
       </div>
       <div className="grid xl:grid-cols-3 gap-4 mt-4">
         <div className="card p-5 xl:col-span-2" data-testid="dashboard-sales-trend-chart">
-          <div className="flex items-center justify-between mb-3"><h3 className="font-display font-semibold flex items-center gap-1.5">Weekly net sales · Bata weeks (2025 → Wk32 2026)<HelpLink id="d-weekly" /></h3><span className="text-xs text-slate-400">INR · as of {d.as_of}</span></div>
+          <div className="flex items-center justify-between mb-3"><h3 className="font-display font-semibold flex items-center gap-1.5">Weekly net sales · {brand.weekLabel} (2025 → Wk32 2026)<HelpLink id="d-weekly" /></h3><span className="text-xs text-slate-400">INR · as of {d.as_of}</span></div>
           <ResponsiveContainer width="100%" height={240}>
-            <AreaChart data={d.weekly}><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#E60000" stopOpacity={0.35} /><stop offset="100%" stopColor="#E60000" stopOpacity={0} /></linearGradient></defs>
+            <AreaChart data={d.weekly}><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={brand.accent} stopOpacity={0.35} /><stop offset="100%" stopColor={brand.accent} stopOpacity={0} /></linearGradient></defs>
               <CartesianGrid stroke="#eef2f7" vertical={false} /><XAxis dataKey="week" tickFormatter={(v) => v.slice(2)} fontSize={11} stroke="#94a3b8" /><YAxis tickFormatter={(v) => inr(v, { compact: true })} fontSize={11} stroke="#94a3b8" width={70} />
-              <Tooltip formatter={(v) => inr(v)} labelStyle={{ fontSize: 12 }} /><Area type="monotone" dataKey="net" stroke="#E60000" strokeWidth={2} fill="url(#g)" name="Net sales" /></AreaChart>
+              <Tooltip formatter={(v) => inr(v)} labelStyle={{ fontSize: 12 }} /><Area type="monotone" dataKey="net" stroke={brand.accent} strokeWidth={2} fill="url(#g)" name="Net sales" /></AreaChart>
           </ResponsiveContainer>
         </div>
         <div className="card p-5" data-testid="dashboard-partner-chart">

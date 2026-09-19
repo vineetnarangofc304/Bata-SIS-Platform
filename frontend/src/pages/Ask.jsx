@@ -6,6 +6,7 @@ import { timeAgo } from "@/lib/format";
 import { PageHeader } from "@/components/common/DataTable";
 import { ChatPanel } from "@/components/ask/ChatPanel";
 import { HelpLink } from "@/components/common/HelpLink";
+import { brand } from "@/lib/brand";
 
 export default function Ask() {
   const [sp, setSp] = useSearchParams();
@@ -17,7 +18,7 @@ export default function Ask() {
   const del = async (id) => { await api.delete(`/ask/sessions/${id}`); if (sid === id) select(null); load(); };
   return (
     <div data-testid="ask-page" className="flex flex-col h-[calc(100vh-7.5rem)]">
-      <PageHeader title={<span className="flex items-center gap-2">Ask Bata <HelpLink id="a-what" /></span>} sub="Conversational analytics agent over your live SIS data — every number comes from a query you can inspect." actions={
+      <PageHeader title={<span className="flex items-center gap-2">Ask {brand.name} <HelpLink id="a-what" /></span>} sub="Conversational analytics agent over your live SIS data — every number comes from a query you can inspect." actions={
         <button data-testid="ask-new-session-btn" onClick={() => select(null)} className="h-9 px-3 rounded-md btn-red text-xs font-semibold flex items-center gap-1"><Plus className="h-3.5 w-3.5" />New conversation</button>} />
       <div className="grid lg:grid-cols-[240px_1fr] gap-5 flex-1 min-h-0">
         <div className="card p-2 overflow-y-auto" data-testid="ask-session-list">

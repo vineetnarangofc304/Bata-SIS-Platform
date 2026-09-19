@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { TrendingUp, TrendingDown, Store, MailX, Percent, Layers, ShieldAlert, MessageCircleQuestion } from "lucide-react";
 import { HelpLink } from "@/components/common/HelpLink";
+import { brand } from "@/lib/brand";
 import api from "@/lib/api";
 import { fmtDate } from "@/lib/format";
 import { PageHeader } from "@/components/common/DataTable";
@@ -37,8 +38,8 @@ export default function Insights() {
       </div>
       <Link to="/ask" className="card card-hover p-5 mt-6 flex items-start gap-4 border-[#E60000]/30 block" data-testid="nl-query-link">
         <MessageCircleQuestion className="h-6 w-6 text-[#E60000] shrink-0" />
-        <div><div className="font-display font-semibold text-slate-900">Ask Bata Sales Data <StatusBadge status="active" className="ml-2" /></div><div className="text-xs text-slate-500 mt-1">Ask any question in plain English — e.g. "Which Lifestyle stores dropped more than 20% last week?" The analytics agent queries the same live data behind these insights and shows its workings.</div>
-          <div className="mt-3 text-sm text-[#E60000] font-semibold">Open Ask Bata →</div></div>
+        <div><div className="font-display font-semibold text-slate-900">Ask {brand.name} Sales Data <StatusBadge status="active" className="ml-2" /></div><div className="text-xs text-slate-500 mt-1">Ask any question in plain English — e.g. "Which Lifestyle stores dropped more than 20% last week?" The analytics agent queries the same live data behind these insights and shows its workings.</div>
+          <div className="mt-3 text-sm text-[#E60000] font-semibold">Open Ask {brand.name} →</div></div>
       </Link>
     </div>
   );

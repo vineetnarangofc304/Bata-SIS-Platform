@@ -76,3 +76,13 @@
 .prose-chat td { border-bottom: 1px solid #f1f5f9; padding: .35rem .5rem; font-variant-numeric: tabular-nums; }
 .prose-chat hr { border-color: #e2e8f0; margin: .75rem 0; }
 .help-flash { border-color: #E60000 !important; box-shadow: 0 0 0 3px rgba(230,0,0,.15); }
+
+/* ---- brand: KAZO (monochrome) ---- */
+.brand-kazo .bg-\[\#E60000\], .brand-kazo .btn-red, .brand-kazo .nav-item.active { background-color: #111111 !important; }
+.brand-kazo .btn-red:hover { background-color: #333333 !important; }
+.brand-kazo .text-\[\#E60000\] { color: #111111 !important; }
+.brand-kazo .border-\[\#E60000\], .brand-kazo .border-l-\[\#E60000\] { border-color: #111111 !important; }
+.brand-kazo .bg-\[\#E60000\]\/10, .brand-kazo .bg-\[\#E60000\]\/5 { background-color: rgba(17,17,17,.06) !important; }
+.brand-kazo .border-\[\#E60000\]\/30, .brand-kazo .border-\[\#E60000\]\/40 { border-color: rgba(17,17,17,.3) !important; }
+.brand-kazo .shadow-red-600\/30 { --tw-shadow-color: rgba(17,17,17,.3) !important; }
+.brand-kazo aside[data-testid="sidebar"] > .h-1 { background-color: #ffffff !important; }

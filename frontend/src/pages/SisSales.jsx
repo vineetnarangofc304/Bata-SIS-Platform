@@ -65,7 +65,7 @@ export default function SisSales() {
 
   return (
     <div data-testid="sis-sales-page">
-      <PageHeader title={<span className="flex items-center gap-2">SIS Secondary Sales<HelpLink id="sis-report" title="How this report works" /></span>} sub="Secondary sales vs last year, targets, LTL growth and store productivity — replica of the Power BI SIS DASHBOARD 2026 (Sales tab), computed live on the ingested data." actions={<>
+      <PageHeader title={<span className="flex items-center gap-2">SIS Secondary Sales<HelpLink id="sis-report" title="How this report works" /></span>} sub="Secondary sales vs last year, targets, LTL growth and store productivity — Power BI-style sales matrix computed live on the ingested data." actions={<>
         <button data-testid="sis-reset" onClick={() => setSp(new URLSearchParams())} className="h-9 px-3 rounded-md border text-xs font-medium hover:bg-slate-50 flex items-center gap-1"><RotateCcw className="h-3.5 w-3.5" />Reset</button>
         <button data-testid="sis-export-csv" onClick={() => exportIt("csv")} className="h-9 px-3 rounded-md border text-xs font-medium hover:bg-slate-50 flex items-center gap-1"><Download className="h-3.5 w-3.5" />CSV</button>
         <button data-testid="sis-export-xlsx" onClick={() => exportIt("xlsx")} className="h-9 px-3 rounded-md btn-red text-xs font-semibold flex items-center gap-1"><Download className="h-3.5 w-3.5" />Excel</button></>} />

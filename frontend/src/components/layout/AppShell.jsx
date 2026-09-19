@@ -7,10 +7,11 @@ import { timeAgo } from "@/lib/format";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { StatusBadge } from "@/components/common/Badges";
 import { AskFab } from "@/components/ask/AskFab";
+import { brand } from "@/lib/brand";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "ops", "management"] },
-  { to: "/ask", label: "Ask Bata", icon: MessageCircleQuestion, roles: ["admin", "ops", "management"] },
+  { to: "/ask", label: `Ask ${brand.name}`, icon: MessageCircleQuestion, roles: ["admin", "ops", "management"] },
   { to: "/upload", label: "Upload Data", icon: UploadCloud, roles: ["admin", "ops"] },
   { to: "/batches", label: "Ingestion Batches", icon: Layers, roles: ["admin", "ops", "management"] },
   { to: "/review", label: "Review Queue", icon: CheckSquare, roles: ["admin", "ops"], badge: "review" },
@@ -46,12 +47,12 @@ export default function AppShell() {
       <aside className="w-60 shrink-0 bg-[#111827] text-slate-300 flex flex-col fixed inset-y-0 left-0 z-20" data-testid="sidebar">
         <div className="h-1 bg-[#E60000]" />
         <div className="px-5 py-5 flex items-center gap-3 border-b border-white/5">
-          <img src="/bata-logo-white.svg" alt="Bata" className="h-6 w-auto" data-testid="sidebar-logo" />
+          <img src={brand.logoWhite} alt={brand.name} className={`${brand.logoClass} w-auto`} data-testid="sidebar-logo" />
           <div className="border-l border-white/15 pl-3"><div className="font-display font-semibold text-white leading-tight text-sm">SIS</div><div className="text-[10px] uppercase tracking-widest text-slate-500">Sales Intelligence</div></div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {NAV.filter((n) => n.roles.includes(user.role)).map((n) => (
-            <NavLink key={n.to} to={n.to} end={n.to === "/"} data-testid={`nav-${n.label.toLowerCase().replace(/[^a-z]+/g, "-")}`} className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+            <NavLink key={n.to} to={n.to} end={n.to === "/"} data-testid={`nav-${(n.to === "/ask" ? "ask-bata" : n.label.toLowerCase().replace(/[^a-z]+/g, "-"))}`} className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
               <n.icon className="h-4 w-4" /><span className="flex-1">{n.label}</span>
               {n.badge === "review" && summary?.awaiting_review > 0 && <span className="chip bg-white/15 text-white" data-testid="nav-review-badge">{summary.awaiting_review}</span>}
             </NavLink>
