@@ -19,7 +19,10 @@ api.interceptors.response.use(
   }
 );
 
+export const isGatewayError = (e) => !e?.response || [502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 527].includes(e.response.status) || (typeof e.response.data === "string" && /cloudflare|<html/i.test(e.response.data));
+
 export function errMsg(e) {
+  if (isGatewayError(e)) return "The server is waking up or briefly unavailable — please try again in a few seconds.";
   const d = e?.response?.data?.detail;
   if (!d) return e?.message || "Something went wrong";
   if (typeof d === "string") return d;

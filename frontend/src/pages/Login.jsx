@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { errMsg } from "@/lib/api";
+import { errMsg, isGatewayError } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 
 import { brand } from "@/lib/brand";
@@ -18,7 +18,14 @@ export default function Login() {
   const submit = async (e) => {
     e.preventDefault();
     setBusy(true); setErr("");
-    try { await login(username, password); nav("/"); } catch (ex) { setErr(errMsg(ex)); } finally { setBusy(false); }
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try { await login(username, password); nav("/"); return; }
+      catch (ex) {
+        if (isGatewayError(ex) && attempt < 2) { setErr("Server is waking up — retrying…"); await new Promise((r) => setTimeout(r, 3000)); continue; }
+        setErr(errMsg(ex)); break;
+      }
+    }
+    setBusy(false);
   };
 
   return (
