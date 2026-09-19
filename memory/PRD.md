@@ -63,3 +63,7 @@ Enterprise web app (React / FastAPI / MongoDB) that ingests, standardizes, valid
 - P1: Email ingestion connector activation (needs mailbox creds); scheduled report emails; missing-submission cron; admin one-click password reset.
 - P2: WhatsApp alerts, ERP/POS push, BI connector docs; SSO; per-partner validation rule overrides.
 - NOTE: Universal LLM key balance exhausted as of iteration 3/4 — user must top up for Ask Bata.
+
+## Iteration 5 (2026-06) — brand layer, KAZO proposal, login resilience
+- `lib/brand.js`: `?brand=kazo` white-labels the app (logo, monochrome accent via `.brand-kazo` CSS overrides, "Ask KAZO", hero image); `?brand=reset` back to Bata (default). Used for KAZO proposal screenshots (`/app/data/proposal/kazo/`, generator `build_proposal_kazo.py`, PDF at `/proposal/KAZO_SIS_TechnoCommercial_Proposal_Fundle.pdf`, ₹1.49 L + ₹49k/month).
+- Login: Cloudflare 5xx/HTML gateway errors (pod waking up) now show a friendly message and auto-retry ×3 (`isGatewayError` in api.js). Testing iteration 9: all pass.

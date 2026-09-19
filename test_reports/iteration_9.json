@@ -1,0 +1,23 @@
+{
+  "summary": "Verified the Cloudflare 520 gateway-error UX fix on the Bata SIS login screen. Tested normal login, wrong password (non-gateway path), single 520 → auto-retry recovery via page.route interception, persistent 520 (3 attempts, friendly message, button re-enabled, no raw HTML), and brand switching (kazo/reset). All 6 flows PASSED. No console errors on dashboard/sis-sales/help after login.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Login.jsx retry loop is fine but does not clear the transient 'Server is waking up — retrying…' text between the retry sleep and the next attempt; user briefly sees the retry text even after success (mitigated by immediate nav on success).",
+    "brand.js reads window.location.search at module import time — brand only updates on full page reload, not on client-side route changes. Acceptable for ?brand= query flow but worth documenting.",
+    "isGatewayError treats any response with no `response` object (network error / CORS block) as a gateway error and will retry — could mask real client-side failures; consider distinguishing e.code === 'ERR_NETWORK'."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100% (6/6)"},
+  "test_credentials": "admin / Admin@123 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Cloudflare 520 UX fix fully verified. Test uses page.route('**/api/auth/login', handler) with route.fulfill(status=520, content_type='text/html', body='<html>cloudflare</html>') — first-call-only recovers in ~3s, persistent shows friendly message after 3 attempts (~6s). Brand switching via ?brand=kazo / ?brand=reset works but requires full page reload. Backend login endpoint returns 'Invalid username or password' (not 'Invalid credentials') for wrong password — friendly gateway message correctly NOT shown for 401."
+}
