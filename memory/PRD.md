@@ -67,3 +67,7 @@ Enterprise web app (React / FastAPI / MongoDB) that ingests, standardizes, valid
 ## Iteration 5 (2026-06) — brand layer, KAZO proposal, login resilience
 - `lib/brand.js`: `?brand=kazo` white-labels the app (logo, monochrome accent via `.brand-kazo` CSS overrides, "Ask KAZO", hero image); `?brand=reset` back to Bata (default). Used for KAZO proposal screenshots (`/app/data/proposal/kazo/`, generator `build_proposal_kazo.py`, PDF at `/proposal/KAZO_SIS_TechnoCommercial_Proposal_Fundle.pdf`, ₹1.49 L + ₹49k/month).
 - Login: Cloudflare 5xx/HTML gateway errors (pod waking up) now show a friendly message and auto-retry ×3 (`isGatewayError` in api.js). Testing iteration 9: all pass.
+
+## Iteration 6 (2026-06) — SIS report "no data" fix
+- Root cause: `sis_sales` loader ran only after the main seed and was skipped if it raised (production had empty collection → ₹0 KPIs, empty slicers). Now `seed_pbix` is an independent background task (chunked CSV, progress in `sis_meta.status/loaded_rows`), `/api/sis/meta` self-heals (auto-starts load when empty), `/api/sis/reload` is a background job, page shows a loading banner + polls until ready.
+- Frontend: default view = Partner hierarchy + Till date (matches PBI), stale-response race fixed with request sequencing. Testing iterations 10–11 pass. NOTE: production must be redeployed to pick this up.

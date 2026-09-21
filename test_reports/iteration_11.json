@@ -1,0 +1,26 @@
+{
+  "summary": "Iteration 11 retest of /sis-sales after the reqRef sequencing fix. All 5 review-request criteria PASS: (1) initial load renders 8 sis-row entries with hero NSVG +54.0% (green/positive) and NSV-26 ₹13.21 Cr vs NSV-25 ₹8.58 Cr — Till date filter is genuinely applied (NOT the unfiltered ₹33.74 Cr). (2) Selecting CENTRO in sis-filter-partner-panel updates URL to ?group_by=partner&till_date=Yes&partner=CENTRO, reduces table to exactly 1 row (CENTRO), hero NSV-26 ₹2.44 Cr, #STR-26 = 37, EST (Target) ₹59.97 L, NSV G +69.5%. Escape + sis-toggle-latest_month then shows NSV-26 ₹41.96 L (matches PBIX ~₹41.96 L) with NSV G +23.6%. (3) Rapid race check (CENTRO → sis-hier-2=week → month=Apr immediately) settles to URL ?group_by=partner,week&till_date=Yes&partner=CENTRO&month=Apr with sis-count reading '3 groups · page 1 of 1 · 3,252 source rows' — no stale response overwrite. (4) sis-reset returns to ?group_by=partner&till_date=Yes with 8 rows. (5) Zero console errors on /sis-sales. The stale-response race from iteration 10 is fixed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_11.json"],
+  "action_items": [
+    "Race-check step observed 3 partner×week groups for CENTRO+Apr (weeks 14-16 in data), not 4 (14-17). Review request expected 14-17. This is a backend data-scope point (latest_week=16 per meta) not a race regression — main agent to confirm whether week 17 should be present for CENTRO/Apr."
+  ],
+  "critical_code_review_comments": [
+    "reqRef sequencing in SisSales.jsx correctly discards stale responses — verified by rapid sis-hier-2 → month=Apr switch resolving to the correct final state.",
+    "DEFAULT_PARAMS (group_by=partner, till_date=Yes) applied on empty query string and after sis-reset — verified both.",
+    "Hero cards, sis-row rows, sis-count, and sis-filter-partner-panel checkbox all update in lockstep with URL params — no visual desync observed."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (frontend-only retest)", "frontend": "100% (5/5 review criteria pass)"},
+  "test_credentials": "admin / Admin@123 from /app/memory/test_credentials.md",
+  "seed_data_creation": "None — used existing 218447-row seeded PBIX data (status=ready).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 10 stale-response race is fixed. Row selector is [data-testid='sis-row'] (no numeric suffix). sis-count testid gives '{n} groups · page X of Y · {rows} source rows'. Partner panel labels are clickable inside [data-testid='sis-filter-partner-panel'] via label:has-text('CENTRO'). Only open point: CENTRO+Apr week drill returns 3 weeks (14-16) — main agent to confirm if week 17 should also be in scope.",
+  "rca of the issue": "Original stale-response race (initial unfiltered request resolving after the filtered request and overwriting it) is now fixed by reqRef sequencing in SisSales.jsx — verified by (a) CENTRO filter now really filters (1 row, ₹2.44 Cr hero, previously showed 8 rows with unchanged hero in iter10), and (b) rapid slicer switch (hier-2=week + month=Apr issued in <1s) settles to the correct final state with no console errors."
+}
