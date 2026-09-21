@@ -1,5 +1,6 @@
 """SIS Secondary Sales report — replica of the Power BI 'SIS DASHBOARD 2026 / SALES' matrix with dynamic hierarchy, slicers, paging and all DAX measures."""
 import io
+import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 import pandas as pd
@@ -32,10 +33,11 @@ def _list(v):
 
 
 async def meta():
-    m = await db.sis_meta.find_one({"key": "sis_sales"}, {"_id": 0})
-    if not m:
-        from seed_pbix import refresh_meta
-        m = await refresh_meta()
+    from seed_pbix import get_status, seed_pbix
+    m = await get_status()
+    if m["rows"] == 0 and m.get("status") != "loading":
+        asyncio.create_task(seed_pbix())
+        m["status"] = "loading"
     return m
 
 
@@ -191,5 +193,6 @@ async def reload(user=Depends(get_current_user)):
     if user["role"] != "admin":
         raise HTTPException(status_code=403, detail="Administrator only")
     from seed_pbix import seed_pbix
-    await seed_pbix(force=True)
+    asyncio.create_task(seed_pbix(force=True))
+    await asyncio.sleep(0.5)
     return await meta()

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Download, Columns3, RotateCcw, Layers3 } from "lucide-react";
+import { Download, Columns3, RotateCcw, Layers3, Loader2, AlertTriangle } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { num } from "@/lib/format";
 import api, { errMsg, downloadFile } from "@/lib/api";
 import { PageHeader, selectCls, inputCls } from "@/components/common/DataTable";
 import { HelpLink } from "@/components/common/HelpLink";
@@ -11,10 +13,12 @@ import { HeroBar } from "@/components/sis/HeroBar";
 import { SisTable } from "@/components/sis/SisTable";
 
 const SLICERS = [["partner", "Partner"], ["cluster_manager", "Cluster Mgr"], ["market", "Market"], ["state", "State"], ["city", "City"], ["store_name", "Store"], ["grpcat", "GRPCAT"], ["cat_name", "Category"], ["month", "Month"], ["week", "Week"], ["ltl", "LTL"], ["top_stores", "Top Stores"], ["existing_vs_new", "Exist/New"]];
-const DEFAULT_HIER = ["cluster_manager", "", "", "", ""];
+const DEFAULT_HIER = ["partner", "", "", "", ""];
+const DEFAULT_PARAMS = { group_by: "partner", till_date: "Yes" };
 
 export default function SisSales() {
   const [sp, setSp] = useSearchParams();
+  const { isAdmin } = useAuth();
   const [meta, setMeta] = useState(null);
   const [opts, setOpts] = useState({});
   const [data, setData] = useState(null);
@@ -35,11 +39,17 @@ export default function SisSales() {
   };
   const filterParams = useMemo(() => { const o = {}; [...SLICERS.map((s) => s[0]), "till_date", "latest_wk", "latest_month", "search"].forEach((k) => { if (get(k)) o[k] = get(k); }); return o; }, [sp]); // eslint-disable-line
 
-  useEffect(() => { api.get("/sis/meta").then((r) => setMeta(r.data)); }, []);
+  const loadMeta = useCallback(() => api.get("/sis/meta").then((r) => { setMeta(r.data); return r.data; }), []);
+  useEffect(() => { loadMeta(); if ([...sp.keys()].length === 0) setSp(DEFAULT_PARAMS, { replace: true }); }, [loadMeta]); // eslint-disable-line
+  useEffect(() => {
+    if (meta?.status !== "loading") return;
+    const t = setInterval(() => loadMeta().then((m) => { if (m.status !== "loading") { run(); api.get("/sis/filters", { params: filterParams }).then((r) => setOpts(r.data)); } }), 3000);
+    return () => clearInterval(t);
+  }, [meta?.status, loadMeta]); // eslint-disable-line
   useEffect(() => { api.get("/sis/filters", { params: filterParams }).then((r) => setOpts(r.data)); }, [JSON.stringify(filterParams)]); // eslint-disable-line
   const run = useCallback(() => {
     setLoading(true);
-    const group_by = hier.filter(Boolean).join(",") || "cluster_manager";
+    const group_by = hier.filter(Boolean).join(",") || "partner";
     api.get("/sis/sales-report", { params: { ...filterParams, group_by, sort_by: sort.by || undefined, sort_dir: sort.by ? sort.dir : undefined, page, page_size: 50 } })
       .then((r) => setData(r.data)).catch((e) => toast.error(errMsg(e))).finally(() => setLoading(false));
   }, [JSON.stringify(filterParams), hier.join(), sort.by, sort.dir, page]); // eslint-disable-line
@@ -60,16 +70,26 @@ export default function SisSales() {
   };
   const allCols = data?.columns || meta?.measures || [];
   const visible = allCols.filter((c) => (colMode === "all" || c.group === colMode) && !hidden.includes(c.key)).map((c) => c.key);
-  const exportIt = (fmt) => downloadFile("/sis/sales-report/export", `sis_sales_report.${fmt}`, { ...filterParams, group_by: hier.filter(Boolean).join(",") || "cluster_manager", sort_by: sort.by || undefined, sort_dir: sort.dir, fmt, columns: visible.join(",") });
+  const exportIt = (fmt) => downloadFile("/sis/sales-report/export", `sis_sales_report.${fmt}`, { ...filterParams, group_by: hier.filter(Boolean).join(",") || "partner", sort_by: sort.by || undefined, sort_dir: sort.dir, fmt, columns: visible.join(",") });
   const activeFilters = Object.keys(filterParams).length;
 
   return (
     <div data-testid="sis-sales-page">
       <PageHeader title={<span className="flex items-center gap-2">SIS Secondary Sales<HelpLink id="sis-report" title="How this report works" /></span>} sub="Secondary sales vs last year, targets, LTL growth and store productivity — Power BI-style sales matrix computed live on the ingested data." actions={<>
-        <button data-testid="sis-reset" onClick={() => setSp(new URLSearchParams())} className="h-9 px-3 rounded-md border text-xs font-medium hover:bg-slate-50 flex items-center gap-1"><RotateCcw className="h-3.5 w-3.5" />Reset</button>
+        <button data-testid="sis-reset" onClick={() => setSp(DEFAULT_PARAMS)} className="h-9 px-3 rounded-md border text-xs font-medium hover:bg-slate-50 flex items-center gap-1"><RotateCcw className="h-3.5 w-3.5" />Reset</button>
         <button data-testid="sis-export-csv" onClick={() => exportIt("csv")} className="h-9 px-3 rounded-md border text-xs font-medium hover:bg-slate-50 flex items-center gap-1"><Download className="h-3.5 w-3.5" />CSV</button>
         <button data-testid="sis-export-xlsx" onClick={() => exportIt("xlsx")} className="h-9 px-3 rounded-md btn-red text-xs font-semibold flex items-center gap-1"><Download className="h-3.5 w-3.5" />Excel</button></>} />
 
+      {meta && meta.rows === 0 && (
+        <div data-testid="sis-data-status" className={`card p-4 mb-4 flex items-center gap-3 border-l-4 ${meta.status === "failed" ? "border-l-red-600" : "border-l-amber-500"}`}>
+          {meta.status === "failed" ? <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" /> : <Loader2 className="h-5 w-5 animate-spin text-amber-500 shrink-0" />}
+          <div className="flex-1 text-sm">
+            <div className="font-semibold text-slate-900">{meta.status === "failed" ? "SIS secondary sales data could not be loaded" : "Loading SIS secondary sales data…"}</div>
+            <div className="text-xs text-slate-500 mt-0.5">{meta.status === "failed" ? meta.error : `${num(meta.loaded_rows || 0)} of ~218,447 rows loaded — the report, filters and KPIs will populate automatically when the load completes (about a minute).`}</div>
+          </div>
+          {isAdmin && <button data-testid="sis-load-data-btn" onClick={() => api.post("/sis/reload").then(loadMeta).then(() => toast.success("Data load started"))} className="h-9 px-3 rounded-md btn-red text-xs font-semibold">{meta.status === "failed" ? "Retry load" : "Reload"}</button>}
+        </div>
+      )}
       <HeroBar t={data?.total} meta={data?.meta} />
 
       <div className="card p-3 mt-4 space-y-3" data-testid="sis-filter-bar">

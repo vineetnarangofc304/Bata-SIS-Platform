@@ -89,9 +89,9 @@ async def _seed_safe():
     try:
         await seed.seed()
         await ensure_admin()
-        await seed_pbix()
     except Exception as e:
         logger.exception(f"Seed failed: {e}")
+    asyncio.create_task(seed_pbix())
 
 
 async def ensure_admin():
