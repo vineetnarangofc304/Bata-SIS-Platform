@@ -1,0 +1,47 @@
+{
+  "summary": "Iteration 10: Verified SIS Secondary Sales seed-self-heal, defaults (partner + till_date=Yes), reload background job, and frontend banner/rows/hero. Backend: 7/8 new tests pass + full regression (test_sis_report.py) 20/21 pass (only pre-existing Ask/Help count mismatch fails). Frontend: /sis-sales loads with default URL params, 8 partner rows render, hero NSV-26 shows ₹13.21 Cr, till_date toggle active, banner NOT shown (data already loaded). Slicer panels open (partner 8, month Jan-Apr, week 1-16) and drill/reset work. CENTRO click on partner slicer did not visibly reduce table to 1 row in the test run — needs main-agent verification of checkbox click handler.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/sis/sales-report?group_by=partner,week&latest_month=1", "issue": "Returns weeks [14,15,16,17] but review request expected only weeks 14-16. Week 17 sneaks into 'latest_month=1' scope even though meta.latest_week=16."},
+      {"endpoint": "/api/ask/help", "issue": "Pre-existing (iterations <10): sis section has 15 non-alias help items, test expects 20. Not related to this iteration but still failing."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "SisSales partner slicer", "issue": "Clicking CENTRO label in sis-filter-partner-panel did not filter the table down to 1 row (still 8 rows, hero unchanged). May be a checkbox event issue or panel selection race — needs manual verification.", "selector": "[data-testid='sis-filter-partner-panel']", "priority": "MEDIUM"},
+      {"component": "SisSales week/month slicer values", "issue": "Week panel shows only weeks 1-16 (not 1-52) and Month panel shows Jan-Apr (not Jan-Dec). Backend /api/sis/filters returns 52 weeks & 12 months; UI likely calls filters with till_date=Yes and thus displays only in-scope values. Review request expected 1..52 and Jan..Dec in the slicer.", "selector": "[data-testid='sis-filter-week-panel'], [data-testid='sis-filter-month-panel']", "priority": "MEDIUM"},
+      {"component": "Partner list", "issue": "Actual partners = [CENTRO, KORA, LIFESTYLE, LULU, R. CENTRAL, R. TRENDS, SHOPPERS, SPENCER]; review request expected 'INC5' instead of 'SPENCER'. Likely just spec drift vs. current PBIX data.", "selector": "[data-testid='sis-filter-partner-panel']", "priority": "LOW"},
+      {"component": "Hero NSV Growth", "issue": "Hero shows -60.9% (red). Review request expected 'positive/green'. Actual math (NSV-26 ₹13.21 Cr vs NSV-25 ₹33.74 Cr) yields -60.9%, so likely spec expectation mismatch — flagging for main-agent review.", "selector": "[data-testid='sis-hero-nsv26']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sis_iter10.py",
+    "/app/backend/tests/test_sis_report.py",
+    "/app/test_reports/pytest/iter10_results.xml"
+  ],
+  "action_items": [
+    "Investigate why selecting CENTRO in sis-filter-partner-panel did not reduce table rows in automated test (verify checkbox click event & URL update).",
+    "Decide whether Week/Month slicer panels should display full 1-52 / Jan-Dec (per spec) or only in-scope values (current). If per spec, call /api/sis/filters without till_date restriction for the panel population.",
+    "latest_month=1 scope leaks week 17 — verify server-side bmonth→week mapping for Apr.",
+    "Pre-existing: /api/ask/help sis section only has 15 non-alias items; add remaining 5 to satisfy test."
+  ],
+  "critical_code_review_comments": [
+    "Reload endpoint correctly runs as background task and returns <5s.",
+    "Meta self-heal works: after seed the collection has 218447 rows and status='ready'.",
+    "Frontend default URL params (group_by=partner&till_date=Yes) correctly applied on empty query string.",
+    "Data status banner is correctly hidden when data is already ready (banner not in DOM)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_sis_iter10.py"
+  ],
+  "success_rate": {"backend": "96% (27/28 across new+regression)", "frontend": "80% (defaults/rows/hero/drill/reset OK, CENTRO filter interaction & slicer value counts diverge from spec)"},
+  "test_credentials": "admin / Admin@123, ops / Ops@123 (used from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None — used existing seeded PBIX data (218447 rows already ready).",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend seed self-heal + reload background flow verified end-to-end. /api/sis/meta returns status=ready with 218447 rows on this env. Focus next iteration on: (1) partner-slicer CENTRO checkbox click updating URL + table, (2) confirming whether Week/Month slicer intentionally scope-limits or should show full 1-52 / Jan-Dec, (3) week-17 leak in latest_month=1. Existing pytest files: /app/backend/tests/test_sis_report.py and /app/backend/tests/test_sis_iter10.py.",
+  "rca of the issue": "Original user bug (empty sis_sales collection → all zeros, empty slicers) is FIXED — meta reports rows=218447 status=ready and page renders 8 partner rows with real ₹ values. Remaining findings are spec-vs-implementation deltas not the original bug."
+}

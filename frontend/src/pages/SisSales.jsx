@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Download, Columns3, RotateCcw, Layers3, Loader2, AlertTriangle } from "lucide-react";
@@ -46,12 +46,16 @@ export default function SisSales() {
     const t = setInterval(() => loadMeta().then((m) => { if (m.status !== "loading") { run(); api.get("/sis/filters", { params: filterParams }).then((r) => setOpts(r.data)); } }), 3000);
     return () => clearInterval(t);
   }, [meta?.status, loadMeta]); // eslint-disable-line
-  useEffect(() => { api.get("/sis/filters", { params: filterParams }).then((r) => setOpts(r.data)); }, [JSON.stringify(filterParams)]); // eslint-disable-line
+  const optReqRef = useRef(0);
+  useEffect(() => { const id = ++optReqRef.current; api.get("/sis/filters", { params: filterParams }).then((r) => { if (id === optReqRef.current) setOpts(r.data); }); }, [JSON.stringify(filterParams)]); // eslint-disable-line
+  const reqRef = useRef(0);
   const run = useCallback(() => {
+    if ([...sp.keys()].length === 0) return;
+    const id = ++reqRef.current;
     setLoading(true);
     const group_by = hier.filter(Boolean).join(",") || "partner";
     api.get("/sis/sales-report", { params: { ...filterParams, group_by, sort_by: sort.by || undefined, sort_dir: sort.by ? sort.dir : undefined, page, page_size: 50 } })
-      .then((r) => setData(r.data)).catch((e) => toast.error(errMsg(e))).finally(() => setLoading(false));
+      .then((r) => { if (id === reqRef.current) setData(r.data); }).catch((e) => toast.error(errMsg(e))).finally(() => { if (id === reqRef.current) setLoading(false); });
   }, [JSON.stringify(filterParams), hier.join(), sort.by, sort.dir, page]); // eslint-disable-line
   useEffect(() => { run(); }, [run]);
 
