@@ -232,36 +232,9 @@ def build():
                     "<b>Object storage</b>: up to 25 GB of original partner files; retention as per KAZO policy (never delete by default).",
                     "<b>Support</b>: business-hours L2/L3 support (IST), 4-hour response for P1, monthly health report, security patches and dependency upgrades.",
                     "<b>Change absorption</b>: onboarding of new partner formats / alias updates / rule tuning up to 4 hours per month; new masters loads.",
-                    "<b>Continuous improvement</b>: quarterly review with business owner; minor UI/report tweaks included."]),
-          PageBreak()]
+                    "<b>Continuous improvement</b>: quarterly review with business owner; minor UI/report tweaks included."])]
 
-    s += [P("7. Commercials", "h1"),
-          table([["Item", "Description", "Amount (INR)"],
-                 ["One-time setup & implementation", "Discovery, KAZO data model & white-labelling, ingestion of BC/POS sales, stock, transfer, item & store master extracts plus up to 6 partner formats, dashboard, Sales matrix, 15 standard reports, the 9 KAZO reports in §3 (Broken/Non-Broken, Buying vs Plan, L2L, Product Review, Sell-Through, Offer ATV/UPT, Buy-2-Get-30, Pujo, Footfall), Ask KAZO agent, Help Center, UAT, go-live, training (2 sessions)", "₹ 1,49,000"],
-                 ["Monthly managed service", "Hosting & infrastructure, backups, monitoring, AI layer usage pool, object storage, L2/L3 support, security updates, format-drift absorption (4 h/month), quarterly reviews", "₹ 49,000 / month"]], [42 * mm, 98 * mm, 30 * mm]),
-          Spacer(1, 6),
-          P("Indicative first-year total: ₹ 1,49,000 + 12 × ₹ 49,000 = <b>₹ 7,37,000</b> (plus GST @ 18 %).", "p"), Spacer(1, 6),
-          P("Payment terms", "h3"), *bullets(["One-time fee: 50 % on signing, 50 % on production go-live / UAT sign-off.", "Monthly fee: invoiced in advance on the 1st of each month; payable within 15 days.", "Minimum term 12 months; 60-day notice for termination thereafter; all data exported to KAZO on exit at no cost.", "Prices exclusive of GST and any third-party licences KAZO may choose (e.g. own OpenAI enterprise key, SSO IdP)."]),
-          Spacer(1, 6), P("Optional add-ons (quoted separately)", "h3"),
-          table([["Add-on", "Indicative"], ["Automated mailbox ingestion (Microsoft Graph / Gmail / IMAP) activation with KAZO mailbox credentials", "₹ 25,000 one-time"], ["Scheduled e-mail / WhatsApp digests & alerts (partner scorecards, missing submissions)", "₹ 35,000 one-time + messaging cost"],
-                 ["Additional partner formats beyond 6", "₹ 8,000 per partner"], ["Additional BI tabs / custom dashboards rebuilt natively", "₹ 20,000 per tab"], ["ERP / POS push and BI (Power BI / Tableau) live connector", "₹ 60,000 one-time"], ["SSO (Azure AD / Google Workspace)", "₹ 25,000 one-time"], ["Weekly digest PDF / partner scorecard export", "₹ 15,000 one-time"]], [125 * mm, 45 * mm]),
-          PageBreak()]
-
-    s += [P("8. Out of Scope (current engagement)", "h1"),
-          *bullets(["Live mailbox ingestion is built but inactive until KAZO provides mailbox credentials (add-on above).", "E-mail / WhatsApp / SMS delivery of notifications (in-app notifications are live).",
-                    "Reports beyond the 9 KAZO reports in §3 and the 15 standard reports (add-on per tab).", "Partner formats beyond the first 6 (add-on).", "Write-back to Business Central (e.g. auto-creating transfer orders from IST suggestions) — recommendations are exported for manual posting.",
-                    "Primary-sales / ERP (SAP) integration, POS feeds, write-back to partner systems.", "Single sign-on, MFA hardware tokens, on-premise deployment.", "History prior to last financial year unless supplied by KAZO in the standard template.",
-                    "Custom mobile apps (the web app is responsive for tablets).", "Changes to partner contracts / margin structures; the platform reflects the margin master supplied by KAZO."]),
-          Spacer(1, 10), P("9. Assumptions & Acceptance", "h1"),
-          *bullets(["KAZO provides partner files (min. 8 weeks of history per partner), masters and targets in the agreed templates and nominates a business owner for UAT sign-off within 10 working days.",
-                    "Partner formats will continue to drift; the recognition engine and alias memory are designed for this and covered under the monthly service.",
-                    "Model usage for Ask KAZO routed through the platform key; KAZO may substitute its own OpenAI key at any time.",
-                    "Acceptance criteria: all modules in §2 available in production under KAZO branding, Secondary Sales totals reconcile to KAZO's existing partner statements for the same filters, automated regression suite green."]),
-          Spacer(1, 10), P("10. Delivery Timeline", "h1"),
-          table([["Phase", "Scope", "Status"], ["Week 1–2 — Setup & branding", "KAZO white-label, partner discovery, data model, masters templates", "Planned"], ["Week 3–4 — Data onboarding", "BC/POS sales, stock, transfers, item & store masters, targets, buy plan; up to 6 partner formats; history load", "Planned"], ["Week 4–6 — KAZO report suite", "9 reports of §3 rebuilt as live screens with hero KPIs, slicers, drill-down, export", "Planned"],
-                 ["Week 6 — Intelligence", "Sales matrix, Ask KAZO agent, Help Center configured to KAZO measures", "Planned"], ["Week 7 — UAT & go-live", "UAT, training (2 sessions), production go-live", "Planned"], ["Optional", "Mailbox ingestion, scheduled digests, extra tabs, BI connector", "On order"]], [45 * mm, 100 * mm, 25 * mm]),
-          Spacer(1, 14), P("Prepared by <b>Fundle</b> for KAZO. We look forward to partnering with KAZO on making shop-in-shop data trusted, fast and self-service.", "p"),
-          Spacer(1, 16), table([["For KAZO", "For Fundle"], ["Name / Title:\n\n\nSignature & date:", "Name / Title:\n\n\nSignature & date:"]], [85 * mm, 85 * mm], zebra=False)]
+    s += [Spacer(1, 14), P("Prepared by <b>Fundle</b> for KAZO. We look forward to partnering with KAZO on making retail data trusted, fast and self-service.", "p")]
     doc.build(s)
     for out in OUT[1:]:
         out.write_bytes(OUT[0].read_bytes())
