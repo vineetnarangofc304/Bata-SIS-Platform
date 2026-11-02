@@ -90,3 +90,9 @@ frontend/node_modules/.cache/default-development/7.pack
 frontend/node_modules/.cache/default-development/8.pack
 frontend/node_modules/.cache/default-development/2.pack
 data/kazo/kazo_files.zip
+.env
+.env.*
+*.env
+credentials.json
+*.key
+.credentials
